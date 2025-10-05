@@ -35,7 +35,7 @@ function Home({ mode }) {
                     </div>
 
                     {/* Cards and footer */}
-                    <div className={`w-full ${isViewing ? 'opacity-0 translate-y-30' : ''} transition-all duration-500 flex flex-col items-center`}>
+                    <div className={`w-full ${isViewing ? 'opacity-0 translate-y-30' : ''} transition-all duration-500 flex flex-col items-center mt-[8vh]`}>
 
                         <div className=" w-[90%] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-20 p-10">
                             {astroCards.map((card, index) => (
