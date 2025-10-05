@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
-import { ZoomIn, ZoomOut, Home, Info, Plus } from 'lucide-react';
+import { ZoomIn, ZoomOut, Home, Info, Plus, Pen } from 'lucide-react';
 import Return from './Return';
 
 
-function ViewerControls({ osdInstance, isViewing, setIsViewing }) {
+function ViewerControls({ osdInstance, isViewing, setIsViewing, description, setShowAnnotation }) {
     const handleZoomIn = () => osdInstance.current?.viewport.zoomBy(2);
     const handleZoomOut = () => osdInstance.current?.viewport.zoomBy(0.5);
     const handleReset = () => osdInstance.current?.viewport.goHome();
@@ -13,22 +13,25 @@ function ViewerControls({ osdInstance, isViewing, setIsViewing }) {
     return (
         <>
             <div className={`${isViewing ? 'opacity-100' : 'hidden opacity-0'} fixed top-1/2 left-1/2 -mx-1/2 -my-1/2 z-20 select-none transition-opacity duration-300`}>
-                <Plus className='w-8 h-8 text-neutral-600' />
+                <Plus className='w-6 h-6 text-neutral-600' />
             </div>
             <Return isViewing={isViewing} onclick={setIsViewing} />
             <div className={`${isViewing ? 'opacity-100' : 'hidden opacity-0'} fixed top-24 right-4 z-20 flex flex-col gap-2 pointer-events-auto select-none transition-opacity duration-300`}>
                 {/* Controls */}
-                <button onClick={handleZoomIn} className="p-3 bg-white/95 rounded-lg shadow-lg cursor-pointer">
-                    <ZoomIn className="w-5 h-5 text-gray-800" />
+                <button onClick={handleZoomIn} className="p-3 bg-white/15 border-2 border-white/20 rounded-lg shadow-lg cursor-pointer">
+                    <ZoomIn className="w-5 h-5 text-white/80" />
                 </button>
-                <button onClick={handleZoomOut} className="p-3 bg-white/95 rounded-lg shadow-lg cursor-pointer">
-                    <ZoomOut className="w-5 h-5 text-gray-800" />
+                <button onClick={handleZoomOut} className="p-3 bg-white/15 border-2 border-white/20 rounded-lg shadow-lg cursor-pointer">
+                    <ZoomOut className="w-5 h-5 text-white/80" />
                 </button>
-                <button onClick={handleReset} className="p-3 bg-white/95 rounded-lg shadow-lg cursor-pointer">
-                    <Home className="w-5 h-5 text-gray-800" />
+                <button onClick={handleReset} className="p-3 bg-white/15 border-2 border-white/20 rounded-lg shadow-lg cursor-pointer">
+                    <Home className="w-5 h-5 text-white/80" />
                 </button>
-                <button onClick={() => setShowInfo(!showInfo)} className="p-3 bg-white/95 rounded-lg shadow-lg cursor-pointer">
-                    <Info className="w-5 h-5 text-gray-800" />
+                <button onClick={setShowAnnotation} className="p-3 bg-white/15 border-2 border-white/20 rounded-lg shadow-lg cursor-pointer">
+                    <Pen className="w-5 h-5 text-white/80" />
+                </button>
+                <button onClick={() => setShowInfo(!showInfo)} className="p-3 bg-white/15 border-2 border-white/20 rounded-lg shadow-lg cursor-pointer">
+                    <Info className="w-5 h-5 text-white/80" />
                 </button>
 
                 {/* Layer Selector
@@ -77,10 +80,12 @@ function ViewerControls({ osdInstance, isViewing, setIsViewing }) {
                 </div>
                 </div>
                 )}*/}
+                {/* Description */}
+                <div className={`${showInfo ? 'opacity-100' : "opacity-0"} max-w-80 p-4 rounded-2xl text-white border-2 border-white/20 bg-white/10 fixed bottom-5 right-5 transition-opacity duration-300`}>
+                    {description}
+                </div >
             </div>
-            <div>
 
-            </div>
 
         </>
     )

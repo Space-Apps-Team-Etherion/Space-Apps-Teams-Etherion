@@ -55,10 +55,11 @@ import React, { useEffect, useRef, useState } from 'react'
 import OpenSeaDragon from 'openseadragon';
 import ViewerControls from './ViewerControls';
 
-const OSDViewer = ({ tileSource, fixed, isViewing, setIsViewing }) => {
+const OSDViewer = ({ tileSource, fixed, isViewing, setIsViewing, description }) => {
     const viewerRef = useRef(null)
     const osdRef = useRef(null)
     const [annotations, setAnnotations] = useState([])
+    const [showAnnotation, setShowAnnotation] = useState(false)
     const [showContextMenu, setShowContextMenu] = useState(false)
     const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 })
     const [pendingAnnotation, setPendingAnnotation] = useState(null)
@@ -166,7 +167,7 @@ const OSDViewer = ({ tileSource, fixed, isViewing, setIsViewing }) => {
         // Add annotation markers
         annotations.forEach((annotation, index) => {
             const marker = document.createElement('div');
-            marker.className = 'annotation-marker';
+            marker.className = `annotation-marker`;
             marker.style.cssText = `
                 position: absolute;
                 width: 24px;
@@ -277,33 +278,31 @@ const OSDViewer = ({ tileSource, fixed, isViewing, setIsViewing }) => {
     return (
         <>
             <div
-                className={`bg-black text-white ${fixed ? 'fixed top-0 left-0' : ''}`}
+                className={`bg-black text-white ${fixed ? 'fixed top-0 left-0' : 'relative'}`}
                 ref={viewerRef}
-                style={{ width: '100%', height: '100vh', position: 'relative' }}
+                style={{ width: '100%', height: '100vh' }}
             >
             </div>
 
             {/* Context Menu for Adding Annotations */}
             {showContextMenu && (
                 <div
-                    className="context-menu"
+                    className={`context-menu p-4 rounded-2xl text-white border-2 border-white/20 bg-white/10 no-scrollbar transition-opacity duration-300`}
                     style={{
                         position: 'fixed',
                         left: `${contextMenuPosition.x}px`,
                         top: `${contextMenuPosition.y}px`,
-                        backgroundColor: 'white',
-                        border: '1px solid #ccc',
-                        borderRadius: '8px',
                         padding: '12px',
                         boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                         zIndex: 10000,
                         minWidth: '250px'
                     }}
                 >
-                    <h3 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                    <h3 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold' }}>
                         Add Annotation
                     </h3>
                     <textarea
+                        className='resize-none border-white/20 border-1 focus:outline-none'
                         value={annotationText}
                         onChange={(e) => setAnnotationText(e.target.value)}
                         placeholder="Enter annotation text..."
@@ -312,12 +311,9 @@ const OSDViewer = ({ tileSource, fixed, isViewing, setIsViewing }) => {
                             width: '100%',
                             minHeight: '60px',
                             padding: '8px',
-                            border: '1px solid #ddd',
                             borderRadius: '4px',
                             fontSize: '13px',
-                            resize: 'vertical',
                             fontFamily: 'inherit',
-                            color: '#333'
                         }}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' && e.ctrlKey) {
@@ -336,7 +332,7 @@ const OSDViewer = ({ tileSource, fixed, isViewing, setIsViewing }) => {
                                 backgroundColor: '#3b82f6',
                                 color: 'white',
                                 border: 'none',
-                                borderRadius: '4px',
+                                borderRadius: '10px',
                                 cursor: 'pointer',
                                 fontSize: '13px',
                                 fontWeight: '500'
@@ -352,7 +348,7 @@ const OSDViewer = ({ tileSource, fixed, isViewing, setIsViewing }) => {
                                 backgroundColor: '#f3f4f6',
                                 color: '#374151',
                                 border: '1px solid #d1d5db',
-                                borderRadius: '4px',
+                                borderRadius: '10px',
                                 cursor: 'pointer',
                                 fontSize: '13px',
                                 fontWeight: '500'
@@ -367,9 +363,9 @@ const OSDViewer = ({ tileSource, fixed, isViewing, setIsViewing }) => {
             {/* Annotation Tooltip on Hover */}
             {hoveredAnnotation && (
                 <div
+                    className='bg-neutral-900/50'
                     style={{
                         position: 'fixed',
-                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
                         color: 'white',
                         padding: '8px 12px',
                         borderRadius: '6px',
@@ -394,15 +390,30 @@ const OSDViewer = ({ tileSource, fixed, isViewing, setIsViewing }) => {
             )}
 
             {/* Annotations List Panel */}
-            {annotations.length > 0 && (
-                <div
+            {annotations.length === 0 && isViewing && (
+                <div className={`${showAnnotation ? 'opacity-100' : 'opacity-0'} pointer-events-none p-4 rounded-2xl text-white border-2 border-white/20 bg-white/10 no-scrollbar transition-opacity duration-300`}
                     style={{
                         position: 'fixed',
                         right: '20px',
-                        top: '20px',
-                        backgroundColor: 'white',
-                        borderRadius: '8px',
-                        padding: '16px',
+                        top: '25em',
+                        padding: '1em 1.2em',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                        maxWidth: '300px',
+                        maxHeight: '400px',
+                        overflowY: 'auto',
+                        zIndex: 1000
+                    }}>
+                    No annotation yet <br /> <span className='text-sm opacity-60'>(right click on a spot to add an annotation)</span>
+                </div>
+            )}
+            {annotations.length > 0 && isViewing && (
+                <div
+                    className={`${showAnnotation ? 'opacity-100' : 'opacity-0 pointer-events-none'} p-4 rounded-2xl text-white border-2 border-white/20 bg-white/10 no-scrollbar transition-opacity duration-300`}
+                    style={{
+                        position: 'fixed',
+                        right: '20px',
+                        top: '25em',
+                        padding: '1em 1.2em',
                         boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                         maxWidth: '300px',
                         maxHeight: '400px',
@@ -410,29 +421,27 @@ const OSDViewer = ({ tileSource, fixed, isViewing, setIsViewing }) => {
                         zIndex: 1000
                     }}
                 >
-                    <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
-                        Annotations ({annotations.length})
+                    <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: 'bold' }}>
+                        Annotations ( <span className='font-mono font-light'>{annotations.length}</span> )
                     </h3>
                     {annotations.map((annotation, index) => (
                         <div
                             key={annotation.id}
+                            className='p-4 rounded-lg text-white border-2 border-white/20 bg-white/30'
                             style={{
                                 padding: '8px',
                                 marginBottom: '8px',
-                                backgroundColor: '#f9fafb',
-                                borderRadius: '6px',
-                                border: '1px solid #e5e7eb',
                                 cursor: 'pointer'
                             }}
                             onClick={() => handleAnnotationClick(annotation, index)}
                         >
-                            <div style={{ fontWeight: 'bold', fontSize: '12px', color: '#3b82f6', marginBottom: '4px' }}>
+                            <div style={{ fontWeight: 'bold', fontSize: '1em', marginBottom: '4px' }} className='text-red-600'>
                                 #{index + 1}
                             </div>
-                            <div style={{ fontSize: '13px', color: '#374151' }}>
+                            <div style={{ fontSize: '1.1em' }}>
                                 {annotation.text}
                             </div>
-                            <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>
+                            <div style={{ fontSize: '1em', marginTop: '4px' }} className='opacity-70 text-neutral-50'>
                                 {new Date(annotation.timestamp).toLocaleString()}
                             </div>
                         </div>
@@ -440,7 +449,7 @@ const OSDViewer = ({ tileSource, fixed, isViewing, setIsViewing }) => {
                 </div>
             )}
 
-            <ViewerControls isViewing={isViewing} osdInstance={osdRef} setIsViewing={setIsViewing} />
+            <ViewerControls setShowAnnotation={() => setShowAnnotation(!showAnnotation)} isViewing={isViewing} osdInstance={osdRef} setIsViewing={setIsViewing} description={description} />
         </>
     )
 }

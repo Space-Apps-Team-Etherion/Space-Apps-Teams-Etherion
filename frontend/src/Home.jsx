@@ -10,6 +10,7 @@ import { astroCards } from './assets/astroCards';
 function Home({ mode }) {
     const [isViewing, setIsViewing] = useState(false)
     const [iiifTileSource, setIiifTileSource] = useState("./NGC_5866/opo0624a.dzi")
+    const [currentDescription, setCurrentDescription] = useState("Mars is the fourth planet from the Sun, known as the Red Planet due to iron oxide on its surface. It has the largest volcano in the solar system, Olympus Mons.")
     // https://esahubble.org/images/opo0328a/zoomable/
     // const iiifTileSource = "./messier82/heic064a.dzi"
     // const iiifTileSource = "./Jupiter/heic1914b.dzi"
@@ -19,7 +20,7 @@ function Home({ mode }) {
     return (
         <>
             <div className={`relative w-full h-screen ${mode ? 'bg-white' : 'bg-neutral-500'} raleway`}>
-                <OSDViewer tileSource={iiifTileSource} mode={mode} fixed={true} isViewing={isViewing} setIsViewing={() => setIsViewing(false)} />
+                <OSDViewer description={currentDescription} tileSource={iiifTileSource} mode={mode} fixed={true} isViewing={isViewing} setIsViewing={() => setIsViewing(false)} />
                 <div className={`absolute z-10 top-0 left-0 text-white w-full h-full ${isViewing ? ' pointer-events-none' : ''}`}>
                     {/* Search bar and logo  */}
                     <div className={`flex flex-col ${isViewing ? 'opacity-0 -translate-y-30' : ''} transition-all duration-500 gap-[7vh]`}>
@@ -44,7 +45,7 @@ function Home({ mode }) {
                                     title={card.title}
                                     image={card.image}
                                     description={card.description}
-                                    onclick={() => setIiifTileSource(card.IIIF)}
+                                    onclick={() => { setIiifTileSource(card.IIIF); setCurrentDescription(card.description) }}
                                 />
                             ))}
                         </div>

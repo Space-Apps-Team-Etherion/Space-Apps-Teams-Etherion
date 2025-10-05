@@ -10,6 +10,17 @@
   font-style: normal;
 }
 
-body{
-    font-family: Raleway;
+* {
+  scroll-behavior: smooth;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 0px;
+
+}
+
+body {
+  font-family: Raleway;
 }
