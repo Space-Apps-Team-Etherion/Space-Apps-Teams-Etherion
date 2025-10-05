@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Globe → Deep Zoom (Cesium + OpenSeadragon)</title>
+
+  <!-- Cesium styles -->
+  <link href="https://unpkg.com/cesium/Build/Cesium/Widgets/widgets.css" rel="stylesheet"/>
+  <style>
+    html, body { margin:0; height:100%; font-family: system-ui,Segoe UI,Roboto,Arial; }
+    #cesiumContainer { width:100%; height:100vh; display:block; position:relative; }
+
+    /* Modal OSD */
+    #osdModal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.75);
+      z-index: 9999;
+    }
+    #osdBox {
+      width: 90vw;
+      height: 86vh;
+      background: #111;
+      border-radius: 8px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+      position: relative;
+      overflow: hidden;
+    }
+    #osdViewer { width:100%; height:100%; }
+    #osdClose {
+      position: absolute; top:12px; right:14px;
+      z-index:10001; color:white; font-size:20px; cursor:pointer;
+      background: rgba(0,0,0,0.4); padding:6px 10px; border-radius:6px;
+    }
+    #toast {
+      position: absolute; left: 12px; bottom: 12px; padding:8px 12px;
+      background: rgba(0,0,0,0.6); color: #fff; border-radius:6px; font-size:13px;
+      z-index: 9998;
+    }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+
+  <!-- OSD modal -->
+  <div id="osdModal" aria-hidden="true">
+    <div id="osdBox">
+      <div id="osdClose">✕</div>
+      <div id="osdViewer"></div>
+    </div>
+  </div>
+
+  <div id="toast" style="display:none"></div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/cesium/Build/Cesium/Cesium.js"></script>
+  <script src="https://openseadragon.github.io/openseadragon/openseadragon.min.js"></script>
+
+  <script>
+  (function(){
+    // ----- Configuration -----
+    const GIBS_TEMPLATE = 'https://gibs.earthdata.nasa.gov/tiles/epsg3857/best/{layer}/{z}/{y}/{x}.jpg';
+    const LAYER = 'MODIS_Terra_CorrectedReflectance_TrueColor'; // change if needed
+    const PREPARE_ENDPOINT = 'http://localhost:8000/prepare-deepzoom'; // FastAPI endpoint (POST)
+    const DEFAULT_RADIUS_KM = 50; // bbox half-size when clicking (modifiable)
+    const TILESIZE = 512; // must match backend tile size if using our /tiles/{z}/{x}/{y}.png
+
+    // ----- Cesium init -----
+    const viewer = new Cesium.Viewer('cesiumContainer', {
+      imageryProvider: false,
+      baseLayerPicker: false,
+      timeline: false,
+      animation: false
+    });
+
+    // Add GIBS layer (web mercator)
+    const provider = new Cesium.UrlTemplateImageryProvider({
+      url: GIBS_TEMPLATE.replace('{layer}', LAYER),
+      tilingScheme: new Cesium.WebMercatorTilingScheme(),
+      maximumLevel: 9, // preview: increase if needed
+      credit: 'NASA GIBS'
+    });
+    viewer.imageryLayers.addImageryProvider(provider);
+
+    // ----- Helpers -----
+    function showToast(msg, ms=3000){
+      const t = document.getElementById('toast');
+      t.innerText = msg; t.style.display = 'block';
+      clearTimeout(t._timeout);
+      t._timeout = setTimeout(()=> t.style.display='none', ms);
+    }
+
+    // Compute bbox (simple lat/lon square) around center using approx conversion
+    function computeBBoxFromCenter(lon, lat, radiusKm = DEFAULT_RADIUS_KM) {
+      const delta = radiusKm / 111.0; // 1 deg lat ≈ 111 km
+      return {
+        minLon: lon - delta,
+        minLat: lat - delta,
+        maxLon: lon + delta,
+        maxLat: lat + delta
+      };
+    }
+
+    // Build request payload for backend - include bbox; backend decides which COG to use
+    function buildPreparePayload(bbox){
+      return { bbox }; // keeps it simple; extend with layer/url if you want
+    }
+
+    // ----- OpenSeadragon Modal -----
+    let osd = null;
+    const modal = document.getElementById('osdModal');
+    const osdViewerId = 'osdViewer';
+    document.getElementById('osdClose').addEventListener('click', closeOSD);
+
+    function openOSDWithTileTemplate(tileTemplate, info){
+  modal.style.display = 'flex';
+  if (osd) { try { osd.destroy(); } catch(e){} osd = null; }
+
+  osd = OpenSeadragon({
+    id: osdViewerId,
+    prefixUrl: 'https://openseadragon.github.io/openseadragon/images/',
+    showNavigator: true,
+    animationTime: 0.2,
+    maxZoomPixelRatio: 2
+  });
+
+  const width = info && info.width ? info.width : 100000;
+  const height = info && info.height ? info.height : 100000;
+  const minzoom = info && info.minzoom ? parseInt(info.minzoom) : 0;
+  const maxzoom = info && info.maxzoom ? parseInt(info.maxzoom) : (minzoom + 8);
+
+  // detect ordering: does template contain "{y}/{x}"? Keep original placeholders
+  const template = tileTemplate;
+  const usesYX = template.includes('{y}') && template.indexOf('{y}') < template.indexOf('{x}');
+  // if tiles look flipped vertically, set this to true to flip y: y = 2^z - 1 - y
+  // you can toggle automatically after first requests if necessary
+  const tmsFlip = false; // set true if you observe vertical inversion
+
+  osd.open({
+    tileSource: {
+      height: height,
+      width: width,
+      tileSize: TILESIZE,
+      minLevel: 0,
+      maxLevel: Math.max(0, maxzoom - minzoom),
+      getTileUrl: function(level, x, y) {
+        const z = level + minzoom;
+        let tx = x;
+        let ty = y;
+        if (tmsFlip) {
+          ty = Math.pow(2, z) - 1 - y;
+        }
+        // When template uses {y}/{x}, we still replace both placeholders:
+        let url = template.replace('{z}', z).replace('{x}', tx).replace('{y}', ty);
+        // Some templates (GIBS) use {y}/{x} ordering — replacements above handle it.
+        return url;
+      }
+    }
+  });
+}
+    function closeOSD(){
+      modal.style.display = 'none';
+      if (osd){ try { osd.destroy(); } catch(e){} osd=null; }
+    }
+
+    // ----- Interaction: click to request deep zoom -----
+    const handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+    handler.setInputAction(function(click) {
+      // pick point on globe
+      const picked = viewer.camera.pickEllipsoid(click.position, viewer.scene.globe.ellipsoid);
+      if (!picked) {
+        showToast('Cliquez sur la surface terrestre.');
+        return;
+      }
+      const carto = Cesium.Cartographic.fromCartesian(picked);
+      const lon = Cesium.Math.toDegrees(carto.longitude);
+      const lat = Cesium.Math.toDegrees(carto.latitude);
+
+      // build bbox (in degrees)
+      const bbox = computeBBoxFromCenter(lon, lat, DEFAULT_RADIUS_KM);
+
+      showToast('Préparation de la vue détaillée…');
+
+      // call backend: POST /prepare-deepzoom
+      fetch('http://localhost:8000/prepare-deepzoom', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(buildPreparePayload(bbox))
+})
+.then(async (r) => {
+  if (!r.ok) {
+    const txt = await r.text();
+    throw new Error(txt || `Erreur HTTP ${r.status}`);
+  }
+  return r.json();
+})
+.then(data => {
+        // Expect data.tileTemplate (string) or data.tileSource (object) optionally info.width/height
+        const tileTemplate = data.tileTemplate || data.tileSource || data.url;
+        const info = { width: data.width, height: data.height, maxzoom: data.maxzoom, minzoom: data.minzoom };
+        if (!tileTemplate) throw new Error('Aucune tileTemplate renvoyée par le backend.');
+        openOSDWithTileTemplate(tileTemplate, info);
+      })
+.catch(err => {
+  console.error(err);
+  showToast('Erreur backend (voir console).', 5000);
+});
+
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    // ----- Optional: open modal when camera altitude below threshold (commenté) -----
+    // viewer.camera.changed.addEventListener(() => {
+    //   const carto = Cesium.Cartographic.fromCartesian(viewer.camera.position);
+    //   const alt = carto.height;
+    //   if (alt < 50000 && !modalOpen) { ... }
+    // });
+
+    // ----- Useful dev helpers: display current lon/lat on mousemove (optional) -----
+    (function addMouseCoords() {
+      const coordDiv = document.createElement('div');
+      coordDiv.style.position = 'absolute';
+      coordDiv.style.left = '12px';
+      coordDiv.style.top = '12px';
+      coordDiv.style.padding = '6px 10px';
+      coordDiv.style.background = 'rgba(0,0,0,0.45)';
+      coordDiv.style.color = 'white';
+      coordDiv.style.fontSize = '12px';
+      coordDiv.style.borderRadius = '6px';
+      coordDiv.style.zIndex = '9998';
+      coordDiv.innerText = 'lon: --, lat: --';
+      document.body.appendChild(coordDiv);
+
+      const scene = viewer.scene;
+      const handlerMove = new Cesium.ScreenSpaceEventHandler(scene.canvas);
+      handlerMove.setInputAction(function(movement) {
+        const cartPt = viewer.camera.pickEllipsoid(movement.endPosition, scene.globe.ellipsoid);
+        if (!cartPt) { coordDiv.innerText = 'lon: --, lat: --'; return; }
+        const c = Cesium.Cartographic.fromCartesian(cartPt);
+        coordDiv.innerText = `lon: ${Cesium.Math.toDegrees(c.longitude).toFixed(3)}, lat: ${Cesium.Math.toDegrees(c.latitude).toFixed(3)}`;
+      }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+    })();
+
+    // ----- End IIFE -----
+  })();
+  </script>
+</body>
+</html>
