@@ -31,8 +31,8 @@ function Home({ mode }) {
                             </div>
                             <SearchBar mode={mode} addStyle={'mt-20'} />
                         </div>
-                        <h1 className='mx-auto text-5xl xl:text-6xl max-w-[60em] lg:w-[45%] text-center font-bold'>Explore Space and Beyond with Space <span className='text-blue-500'>View</span></h1>
-                        <Button content={<>Explore&nbsp;<ChevronRight className='w-5 h-5' /></>} addStyle={'mx-auto'} onclick={() => setIsViewing(true)} />
+                        <h1 className='mx-auto text-5xl xl:text-6xl max-w-[60em] lg:w-[45%] text-center font-bold animate-fade-down'>Explore Space and Beyond with Space <span className='text-blue-500'>View</span></h1>
+                        <Button content={<>Explore&nbsp;<ChevronRight className='w-5 h-5' /></>} addStyle={'mx-auto animate-ease-in delay-150'} onclick={() => setIsViewing(true)} />
                     </div>
 
                     {/* Cards and footer */}
@@ -99,7 +99,7 @@ function Home({ mode }) {
                                 {/* Right: Repo link */}
                                 <div className="text-center md:text-right">
                                     <a
-                                        href="https://github.com/your-repo-link"
+                                        href="https://github.com/Space-Apps-Team-Etherion/Space-View"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-blue-400 hover:underline"

@@ -591,401 +591,401 @@
 
 
 //Version3
-// import React, { useState, useEffect, useRef } from 'react';
-// import { ZoomIn, ZoomOut, Maximize2, Layers, Info, Globe, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ZoomIn, ZoomOut, Maximize2, Layers, Info, Globe, Loader2 } from 'lucide-react';
 
-// export default function NasaEarthMapViewer() {
-//     const [zoom, setZoom] = useState(2);
-//     const [center, setCenter] = useState({ lat: 20, lon: 0 });
-//     const [isDragging, setIsDragging] = useState(false);
-//     const [dragStart, setDragStart] = useState({ x: 0, y: 0, lat: 0, lon: 0 });
-//     const [showInfo, setShowInfo] = useState(true);
-//     const [layer, setLayer] = useState('Satellite');
-//     const [loadingTiles, setLoadingTiles] = useState(0);
-//     const canvasRef = useRef(null);
-//     const imageCache = useRef({});
-//     const animationFrameRef = useRef(null);
+export default function NasaEarthMapViewer() {
+    const [zoom, setZoom] = useState(2);
+    const [center, setCenter] = useState({ lat: 20, lon: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0, lat: 0, lon: 0 });
+    const [showInfo, setShowInfo] = useState(true);
+    const [layer, setLayer] = useState('Satellite');
+    const [loadingTiles, setLoadingTiles] = useState(0);
+    const canvasRef = useRef(null);
+    const imageCache = useRef({});
+    const animationFrameRef = useRef(null);
 
-//     // Fast, reliable tile sources
-//     const layers = {
-//         Satellite: {
-//             name: 'Satellite (Esri)',
-//             url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-//             description: 'High-resolution satellite imagery',
-//             maxZoom: 18
-//         },
-//         OpenStreetMap: {
-//             name: 'OpenStreetMap',
-//             url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-//             description: 'Detailed street and terrain map',
-//             maxZoom: 19
-//         },
-//         Terrain: {
-//             name: 'Terrain',
-//             url: 'https://tile.opentopomap.org/{z}/{x}/{y}.png',
-//             description: 'Topographic map with elevation',
-//             maxZoom: 17
-//         },
-//         Dark: {
-//             name: 'Dark Mode',
-//             url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}.png',
-//             description: 'Dark themed map',
-//             maxZoom: 20
-//         }
-//     };
+   // Fast, reliable tile sources
+   const layers = {
+       Satellite: {
+           name: 'Satellite (Esri)',
+           url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+           description: 'High-resolution satellite imagery',
+           maxZoom: 18
+       },
+       OpenStreetMap: {
+           name: 'OpenStreetMap',
+           url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+           description: 'Detailed street and terrain map',
+           maxZoom: 19
+       },
+       Terrain: {
+           name: 'Terrain',
+           url: 'https://tile.opentopomap.org/{z}/{x}/{y}.png',
+           description: 'Topographic map with elevation',
+           maxZoom: 17
+       },
+       Dark: {
+           name: 'Dark Mode',
+           url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}.png',
+           description: 'Dark themed map',
+           maxZoom: 20
+       }
+   };
 
-//     // Convert lat/lon to tile coordinates
-//     const latLonToTile = (lat, lon, z) => {
-//         const n = Math.pow(2, z);
-//         const x = Math.floor((lon + 180) / 360 * n);
-//         const latRad = lat * Math.PI / 180;
-//         const y = Math.floor((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n);
-//         return { x, y, z };
-//     };
+    // Convert lat/lon to tile coordinates
+    const latLonToTile = (lat, lon, z) => {
+        const n = Math.pow(2, z);
+        const x = Math.floor((lon + 180) / 360 * n);
+        const latRad = lat * Math.PI / 180;
+        const y = Math.floor((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n);
+        return { x, y, z };
+    };
 
-//     // Convert pixel position to lat/lon
-//     const pixelToLatLon = (px, py, centerLat, centerLon, z) => {
-//         const centerTile = latLonToTile(centerLat, centerLon, z);
-//         const scale = Math.pow(2, z);
-//         const worldSize = 256 * scale;
+    // Convert pixel position to lat/lon
+    const pixelToLatLon = (px, py, centerLat, centerLon, z) => {
+        const centerTile = latLonToTile(centerLat, centerLon, z);
+        const scale = Math.pow(2, z);
+        const worldSize = 256 * scale;
 
-//         // Center pixel in world coordinates
-//         const centerX = (centerLon + 180) / 360 * worldSize;
-//         const centerY = (1 - Math.log(Math.tan(centerLat * Math.PI / 180) + 1 / Math.cos(centerLat * Math.PI / 180)) / Math.PI) / 2 * worldSize;
+        // Center pixel in world coordinates
+        const centerX = (centerLon + 180) / 360 * worldSize;
+        const centerY = (1 - Math.log(Math.tan(centerLat * Math.PI / 180) + 1 / Math.cos(centerLat * Math.PI / 180)) / Math.PI) / 2 * worldSize;
 
-//         // New position in world coordinates
-//         const canvas = canvasRef.current;
-//         const newX = centerX + (px - canvas.width / 2);
-//         const newY = centerY + (py - canvas.height / 2);
+        // New position in world coordinates
+        const canvas = canvasRef.current;
+        const newX = centerX + (px - canvas.width / 2);
+        const newY = centerY + (py - canvas.height / 2);
 
-//         // Convert back to lat/lon
-//         const lon = (newX / worldSize) * 360 - 180;
-//         const n = Math.PI - 2 * Math.PI * newY / worldSize;
-//         const lat = (180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n))));
+        // Convert back to lat/lon
+        const lon = (newX / worldSize) * 360 - 180;
+        const n = Math.PI - 2 * Math.PI * newY / worldSize;
+        const lat = (180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n))));
 
-//         return { lat, lon };
-//     };
+        return { lat, lon };
+    };
 
-//     // Get visible tiles
-//     const getVisibleTiles = () => {
-//         const canvas = canvasRef.current;
-//         if (!canvas) return [];
+    // Get visible tiles
+    const getVisibleTiles = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return [];
 
-//         const z = Math.floor(zoom);
-//         const maxZoom = layers[layer].maxZoom;
-//         const actualZoom = Math.min(z, maxZoom);
+        const z = Math.floor(zoom);
+        const maxZoom = layers[layer].maxZoom;
+        const actualZoom = Math.min(z, maxZoom);
 
-//         const centerTile = latLonToTile(center.lat, center.lon, actualZoom);
-//         const scale = Math.pow(2, actualZoom);
+        const centerTile = latLonToTile(center.lat, center.lon, actualZoom);
+        const scale = Math.pow(2, actualZoom);
 
-//         // Calculate center position in pixels
-//         const centerX = (center.lon + 180) / 360 * 256 * scale;
-//         const centerY = (1 - Math.log(Math.tan(center.lat * Math.PI / 180) + 1 / Math.cos(center.lat * Math.PI / 180)) / Math.PI) / 2 * 256 * scale;
+        // Calculate center position in pixels
+        const centerX = (center.lon + 180) / 360 * 256 * scale;
+        const centerY = (1 - Math.log(Math.tan(center.lat * Math.PI / 180) + 1 / Math.cos(center.lat * Math.PI / 180)) / Math.PI) / 2 * 256 * scale;
 
-//         const tilesNeededX = Math.ceil(canvas.width / 256) + 1;
-//         const tilesNeededY = Math.ceil(canvas.height / 256) + 1;
+        const tilesNeededX = Math.ceil(canvas.width / 256) + 1;
+        const tilesNeededY = Math.ceil(canvas.height / 256) + 1;
 
-//         const tiles = [];
-//         const maxTiles = Math.pow(2, actualZoom);
+        const tiles = [];
+        const maxTiles = Math.pow(2, actualZoom);
 
-//         for (let dy = -tilesNeededY; dy <= tilesNeededY; dy++) {
-//             for (let dx = -tilesNeededX; dx <= tilesNeededX; dx++) {
-//                 let tx = centerTile.x + dx;
-//                 const ty = centerTile.y + dy;
+        for (let dy = -tilesNeededY; dy <= tilesNeededY; dy++) {
+            for (let dx = -tilesNeededX; dx <= tilesNeededX; dx++) {
+                let tx = centerTile.x + dx;
+                const ty = centerTile.y + dy;
 
-//                 // Wrap X coordinate
-//                 tx = ((tx % maxTiles) + maxTiles) % maxTiles;
+                // Wrap X coordinate
+                tx = ((tx % maxTiles) + maxTiles) % maxTiles;
 
-//                 if (ty >= 0 && ty < maxTiles) {
-//                     const tileX = tx * 256;
-//                     const tileY = ty * 256;
+                if (ty >= 0 && ty < maxTiles) {
+                    const tileX = tx * 256;
+                    const tileY = ty * 256;
 
-//                     const screenX = canvas.width / 2 + (tileX - centerX);
-//                     const screenY = canvas.height / 2 + (tileY - centerY);
+                    const screenX = canvas.width / 2 + (tileX - centerX);
+                    const screenY = canvas.height / 2 + (tileY - centerY);
 
-//                     tiles.push({ x: tx, y: ty, z: actualZoom, screenX, screenY });
-//                 }
-//             }
-//         }
+                    tiles.push({ x: tx, y: ty, z: actualZoom, screenX, screenY });
+                }
+            }
+        }
 
-//         return tiles;
-//     };
+        return tiles;
+    };
 
-//     // Load tile with faster caching
-//     const loadTile = (tile) => {
-//         const key = `${layer}-${tile.z}-${tile.x}-${tile.y}`;
+    // Load tile with faster caching
+    const loadTile = (tile) => {
+        const key = `${layer}-${tile.z}-${tile.x}-${tile.y}`;
 
-//         if (imageCache.current[key]) {
-//             return imageCache.current[key];
-//         }
+        if (imageCache.current[key]) {
+            return imageCache.current[key];
+        }
 
-//         const img = new Image();
-//         img.crossOrigin = 'anonymous';
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
 
-//         const url = layers[layer].url
-//             .replace('{z}', tile.z)
-//             .replace('{x}', tile.x)
-//             .replace('{y}', tile.y);
+        const url = layers[layer].url
+            .replace('{z}', tile.z)
+            .replace('{x}', tile.x)
+            .replace('{y}', tile.y);
 
-//         img.src = url;
+        img.src = url;
 
-//         img.onloadstart = () => {
-//             setLoadingTiles(prev => prev + 1);
-//         };
+        img.onloadstart = () => {
+            setLoadingTiles(prev => prev + 1);
+        };
 
-//         img.onload = () => {
-//             setLoadingTiles(prev => Math.max(0, prev - 1));
-//             requestAnimationFrame(drawMap);
-//         };
+        img.onload = () => {
+            setLoadingTiles(prev => Math.max(0, prev - 1));
+            requestAnimationFrame(drawMap);
+        };
 
-//         img.onerror = () => {
-//             setLoadingTiles(prev => Math.max(0, prev - 1));
-//         };
+        img.onerror = () => {
+            setLoadingTiles(prev => Math.max(0, prev - 1));
+        };
 
-//         imageCache.current[key] = img;
-//         return img;
-//     };
+        imageCache.current[key] = img;
+        return img;
+    };
 
-//     // Optimized drawing
-//     const drawMap = () => {
-//         const canvas = canvasRef.current;
-//         if (!canvas) return;
+    // Optimized drawing
+    const drawMap = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
 
-//         const ctx = canvas.getContext('2d');
-//         ctx.fillStyle = layer === 'Dark' ? '#1a1a2e' : '#a8dadc';
-//         ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = layer === 'Dark' ? '#1a1a2e' : '#a8dadc';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-//         const tiles = getVisibleTiles();
+        const tiles = getVisibleTiles();
 
-//         tiles.forEach(tile => {
-//             const img = loadTile(tile);
+        tiles.forEach(tile => {
+            const img = loadTile(tile);
 
-//             if (img.complete && img.naturalHeight !== 0) {
-//                 ctx.drawImage(img, tile.screenX, tile.screenY, 256, 256);
-//             }
-//         });
+            if (img.complete && img.naturalHeight !== 0) {
+                ctx.drawImage(img, tile.screenX, tile.screenY, 256, 256);
+            }
+        });
 
-//         // Draw crosshair
-//         ctx.strokeStyle = layer === 'Dark' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.4)';
-//         ctx.lineWidth = 2;
-//         ctx.beginPath();
-//         const cx = canvas.width / 2;
-//         const cy = canvas.height / 2;
-//         ctx.moveTo(cx - 15, cy);
-//         ctx.lineTo(cx + 15, cy);
-//         ctx.moveTo(cx, cy - 15);
-//         ctx.lineTo(cx, cy + 15);
-//         ctx.stroke();
-//     };
+        // Draw crosshair
+        ctx.strokeStyle = layer === 'Dark' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.4)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+        ctx.moveTo(cx - 15, cy);
+        ctx.lineTo(cx + 15, cy);
+        ctx.moveTo(cx, cy - 15);
+        ctx.lineTo(cx, cy + 15);
+        ctx.stroke();
+    };
 
-//     useEffect(() => {
-//         const canvas = canvasRef.current;
-//         if (canvas) {
-//             canvas.width = window.innerWidth;
-//             canvas.height = window.innerHeight;
-//         }
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (canvas) {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
 
-//         drawMap();
+        drawMap();
 
-//         const handleResize = () => {
-//             if (canvas) {
-//                 canvas.width = window.innerWidth;
-//                 canvas.height = window.innerHeight;
-//                 drawMap();
-//             }
-//         };
+        const handleResize = () => {
+            if (canvas) {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                drawMap();
+            }
+        };
 
-//         window.addEventListener('resize', handleResize);
-//         return () => {
-//             window.removeEventListener('resize', handleResize);
-//             if (animationFrameRef.current) {
-//                 cancelAnimationFrame(animationFrameRef.current);
-//             }
-//         };
-//     }, [zoom, center, layer]);
+        window.addEventListener('resize', handleResize);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+            }
+        };
+    }, [zoom, center, layer]);
 
-//     const handleZoomIn = () => {
-//         setZoom(prev => Math.min(prev + 1, layers[layer].maxZoom));
-//     };
+    const handleZoomIn = () => {
+        setZoom(prev => Math.min(prev + 1, layers[layer].maxZoom));
+    };
 
-//     const handleZoomOut = () => {
-//         setZoom(prev => Math.max(prev - 1, 1));
-//     };
+    const handleZoomOut = () => {
+        setZoom(prev => Math.max(prev - 1, 1));
+    };
 
-//     const handleReset = () => {
-//         setZoom(2);
-//         setCenter({ lat: 20, lon: 0 });
-//     };
+    const handleReset = () => {
+        setZoom(2);
+        setCenter({ lat: 20, lon: 0 });
+    };
 
-//     const handleMouseDown = (e) => {
-//         setIsDragging(true);
-//         setDragStart({
-//             x: e.clientX,
-//             y: e.clientY,
-//             lat: center.lat,
-//             lon: center.lon
-//         });
-//     };
+    const handleMouseDown = (e) => {
+        setIsDragging(true);
+        setDragStart({
+            x: e.clientX,
+            y: e.clientY,
+            lat: center.lat,
+            lon: center.lon
+        });
+    };
 
-//     const handleMouseMove = (e) => {
-//         if (!isDragging) return;
+    const handleMouseMove = (e) => {
+        if (!isDragging) return;
 
-//         const dx = e.clientX - dragStart.x;
-//         const dy = e.clientY - dragStart.y;
+        const dx = e.clientX - dragStart.x;
+        const dy = e.clientY - dragStart.y;
 
-//         const z = Math.floor(zoom);
-//         const scale = Math.pow(2, z);
+        const z = Math.floor(zoom);
+        const scale = Math.pow(2, z);
 
-//         // More accurate panning calculation
-//         const latChange = -(dy / 256) * (360 / scale);
-//         const lonChange = -(dx / 256) * (360 / scale);
+        // More accurate panning calculation
+        const latChange = -(dy / 256) * (360 / scale);
+        const lonChange = -(dx / 256) * (360 / scale);
 
-//         let newLat = dragStart.lat + latChange;
-//         let newLon = dragStart.lon + lonChange;
+        let newLat = dragStart.lat + latChange;
+        let newLon = dragStart.lon + lonChange;
 
-//         // Clamp latitude
-//         newLat = Math.max(-85, Math.min(85, newLat));
+        // Clamp latitude
+        newLat = Math.max(-85, Math.min(85, newLat));
 
-//         // Wrap longitude
-//         while (newLon > 180) newLon -= 360;
-//         while (newLon < -180) newLon += 360;
+        // Wrap longitude
+        while (newLon > 180) newLon -= 360;
+        while (newLon < -180) newLon += 360;
 
-//         setCenter({ lat: newLat, lon: newLon });
-//     };
+        setCenter({ lat: newLat, lon: newLon });
+    };
 
-//     const handleMouseUp = () => {
-//         setIsDragging(false);
-//     };
+    const handleMouseUp = () => {
+        setIsDragging(false);
+    };
 
-//     const handleWheel = (e) => {
-//         e.preventDefault();
-//         const delta = e.deltaY > 0 ? -0.5 : 0.5;
-//         const maxZoom = layers[layer].maxZoom;
-//         setZoom(prev => Math.max(1, Math.min(maxZoom, prev + delta)));
-//     };
+    const handleWheel = (e) => {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.5 : 0.5;
+        const maxZoom = layers[layer].maxZoom;
+        setZoom(prev => Math.max(1, Math.min(maxZoom, prev + delta)));
+    };
 
-//     return (
-//         <div className="relative w-full h-screen bg-gray-900 overflow-hidden">
-//             <canvas
-//                 ref={canvasRef}
-//                 className="absolute inset-0"
-//                 style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
-//                 onMouseDown={handleMouseDown}
-//                 onMouseMove={handleMouseMove}
-//                 onMouseUp={handleMouseUp}
-//                 onMouseLeave={handleMouseUp}
-//                 onWheel={handleWheel}
-//             />
+    return (
+        <div className="relative w-full h-screen bg-gray-900 overflow-hidden">
+            <canvas
+                ref={canvasRef}
+                className="absolute inset-0"
+                style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                onWheel={handleWheel}
+            />
 
-//             {/* Loading Indicator */}
-//             {loadingTiles > 0 && (
-//                 <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-10 bg-black/80 text-white px-4 py-2 rounded-full flex items-center gap-2">
-//                     <Loader2 className="w-4 h-4 animate-spin" />
-//                     <span className="text-sm">Loading tiles...</span>
-//                 </div>
-//             )}
+            {/* Loading Indicator */}
+            {loadingTiles > 0 && (
+                <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-10 bg-black/80 text-white px-4 py-2 rounded-full flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="text-sm">Loading tiles...</span>
+                </div>
+            )}
 
-//             {/* Header */}
-//             <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 to-transparent z-10 p-4">
-//                 <div className="flex items-center gap-3">
-//                     <Globe className="w-8 h-8 text-blue-400" />
-//                     <div>
-//                         <h1 className="text-2xl font-bold text-white">Interactive Earth Map</h1>
-//                         <p className="text-sm text-gray-300">Pan, zoom, and explore the world</p>
-//                     </div>
-//                 </div>
-//             </div>
+            {/* Header */}
+            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 to-transparent z-10 p-4">
+                <div className="flex items-center gap-3">
+                    <Globe className="w-8 h-8 text-blue-400" />
+                    <div>
+                        <h1 className="text-2xl font-bold text-white">Interactive Earth Map</h1>
+                        <p className="text-sm text-gray-300">Pan, zoom, and explore the world</p>
+                    </div>
+                </div>
+            </div>
 
-//             {/* Controls */}
-//             <div className="absolute top-24 right-4 z-10 flex flex-col gap-2">
-//                 <button
-//                     onClick={handleZoomIn}
-//                     className="p-3 bg-white/90 rounded-lg shadow-lg hover:bg-white transition cursor-pointer"
-//                     title="Zoom In"
-//                 >
-//                     <ZoomIn className="w-5 h-5 text-gray-800" />
-//                 </button>
-//                 <button
-//                     onClick={handleZoomOut}
-//                     className="p-3 bg-white/90 rounded-lg shadow-lg hover:bg-white transition cursor-pointer"
-//                     title="Zoom Out"
-//                 >
-//                     <ZoomOut className="w-5 h-5 text-gray-800" />
-//                 </button>
-//                 <button
-//                     onClick={handleReset}
-//                     className="p-3 bg-white/90 rounded-lg shadow-lg hover:bg-white transition cursor-pointer"
-//                     title="Reset View"
-//                 >
-//                     <Maximize2 className="w-5 h-5 text-gray-800" />
-//                 </button>
-//                 <button
-//                     onClick={() => setShowInfo(!showInfo)}
-//                     className="p-3 bg-white/90 rounded-lg shadow-lg hover:bg-white transition cursor-pointer"
-//                     title="Toggle Info"
-//                 >
-//                     <Info className="w-5 h-5 text-gray-800" />
-//                 </button>
-//             </div>
+            {/* Controls */}
+            <div className="absolute top-24 right-4 z-10 flex flex-col gap-2">
+                <button
+                    onClick={handleZoomIn}
+                    className="p-3 bg-white/90 rounded-lg shadow-lg hover:bg-white transition cursor-pointer"
+                    title="Zoom In"
+                >
+                    <ZoomIn className="w-5 h-5 text-gray-800" />
+                </button>
+                <button
+                    onClick={handleZoomOut}
+                    className="p-3 bg-white/90 rounded-lg shadow-lg hover:bg-white transition cursor-pointer"
+                    title="Zoom Out"
+                >
+                    <ZoomOut className="w-5 h-5 text-gray-800" />
+                </button>
+                <button
+                    onClick={handleReset}
+                    className="p-3 bg-white/90 rounded-lg shadow-lg hover:bg-white transition cursor-pointer"
+                    title="Reset View"
+                >
+                    <Maximize2 className="w-5 h-5 text-gray-800" />
+                </button>
+                <button
+                    onClick={() => setShowInfo(!showInfo)}
+                    className="p-3 bg-white/90 rounded-lg shadow-lg hover:bg-white transition cursor-pointer"
+                    title="Toggle Info"
+                >
+                    <Info className="w-5 h-5 text-gray-800" />
+                </button>
+            </div>
 
-//             {/* Layer Selector */}
-//             <div className="absolute top-24 left-4 z-10 bg-white/90 rounded-lg shadow-lg p-3">
-//                 <div className="flex items-center gap-2 mb-2">
-//                     <Layers className="w-5 h-5 text-gray-800" />
-//                     <span className="font-semibold text-gray-800">Map Layers</span>
-//                 </div>
-//                 <div className="flex flex-col gap-1">
-//                     {Object.entries(layers).map(([key, value]) => (
-//                         <button
-//                             key={key}
-//                             onClick={() => {
-//                                 setLayer(key);
-//                                 imageCache.current = {};
-//                             }}
-//                             className={`px-3 py-2 rounded text-sm transition text-left ${layer === key
-//                                 ? 'bg-blue-600 text-white'
-//                                 : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-//                                 }`}
-//                         >
-//                             <div className="font-medium">{value.name}</div>
-//                             <div className="text-xs opacity-75">{value.description}</div>
-//                         </button>
-//                     ))}
-//                 </div>
-//             </div>
+            {/* Layer Selector */}
+            <div className="absolute top-24 left-4 z-10 bg-white/90 rounded-lg shadow-lg p-3">
+                <div className="flex items-center gap-2 mb-2">
+                    <Layers className="w-5 h-5 text-gray-800" />
+                    <span className="font-semibold text-gray-800">Map Layers</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                    {Object.entries(layers).map(([key, value]) => (
+                        <button
+                            key={key}
+                            onClick={() => {
+                                setLayer(key);
+                                imageCache.current = {};
+                            }}
+                            className={`px-3 py-2 rounded text-sm transition text-left ${layer === key
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                                }`}
+                        >
+                            <div className="font-medium">{value.name}</div>
+                            <div className="text-xs opacity-75">{value.description}</div>
+                        </button>
+                    ))}
+                </div>
+            </div>
 
-//             {/* Info Panel */}
-//             {showInfo && (
-//                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent z-10 p-4">
-//                     <div className="max-w-4xl mx-auto">
-//                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-white mb-2">
-//                             <div>
-//                                 <p className="text-xs text-gray-400">Latitude</p>
-//                                 <p className="font-mono text-lg">{center.lat.toFixed(4)}°</p>
-//                             </div>
-//                             <div>
-//                                 <p className="text-xs text-gray-400">Longitude</p>
-//                                 <p className="font-mono text-lg">{center.lon.toFixed(4)}°</p>
-//                             </div>
-//                             <div>
-//                                 <p className="text-xs text-gray-400">Zoom Level</p>
-//                                 <p className="font-mono text-lg">{zoom.toFixed(1)}</p>
-//                             </div>
-//                             <div>
-//                                 <p className="text-xs text-gray-400">Map Style</p>
-//                                 <p className="text-lg">{layers[layer].name}</p>
-//                             </div>
-//                         </div>
-//                         <p className="text-sm text-gray-300">{layers[layer].description}</p>
-//                         <p className="text-xs text-gray-400 mt-2">
-//                             Drag to pan • Scroll to zoom • Switch layers to explore different views
-//                         </p>
-//                     </div>
-//                 </div>
-//             )}
-//         </div>
-//     );
-// }
+            {/* Info Panel */}
+            {showInfo && (
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent z-10 p-4">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-white mb-2">
+                            <div>
+                                <p className="text-xs text-gray-400">Latitude</p>
+                                <p className="font-mono text-lg">{center.lat.toFixed(4)}°</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-400">Longitude</p>
+                                <p className="font-mono text-lg">{center.lon.toFixed(4)}°</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-400">Zoom Level</p>
+                                <p className="font-mono text-lg">{zoom.toFixed(1)}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-400">Map Style</p>
+                                <p className="text-lg">{layers[layer].name}</p>
+                            </div>
+                        </div>
+                        <p className="text-sm text-gray-300">{layers[layer].description}</p>
+                        <p className="text-xs text-gray-400 mt-2">
+                            Drag to pan • Scroll to zoom • Switch layers to explore different views
+                        </p>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
 
 //Version 4
 // import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -2052,7 +2052,574 @@
 //                     title="Zoom Out"
 //                 >
 //                     <ZoomOut className="w-5 h-5 text-gray-800" />
-//                 </button>
+// import React, { useState, useEffect, useRef } from 'react';
+// import OpenSeadragon from 'openseadragon';
+// import { ZoomIn, ZoomOut, Maximize2, Layers, Info, Globe, Home, Loader2, MapPin, X, Save } from 'lucide-react';
+
+// export default function NasaEarthViewer() {
+//     const [showInfo, setShowInfo] = useState(true);
+//     const [layer, setLayer] = useState('CartoDB');
+//     const [coordinates, setCoordinates] = useState({ lat: 0, lon: 0, zoom: 2 });
+//     const [isLoading, setIsLoading] = useState(true);
+//     const [error, setError] = useState(null);
+//     const [debugInfo, setDebugInfo] = useState('Initializing...');
+//     const [annotations, setAnnotations] = useState([]);
+//     const [showAnnotationForm, setShowAnnotationForm] = useState(false);
+//     const [currentAnnotation, setCurrentAnnotation] = useState(null);
+//     const [annotationText, setAnnotationText] = useState('');
+//     const [showAnnotations, setShowAnnotations] = useState(true);
+    
+//     const viewerRef = useRef(null);
+//     const osdInstance = useRef(null);
+//     const overlayContainerRef = useRef(null);
+
+//     const layers = {
+//         CartoDB: {
+//             name: 'Light Map',
+//             url: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+//             description: 'Clean, fast-loading map',
+//             maxZoom: 19
+//         },
+//         Dark: {
+//             name: 'Dark Mode',
+//             url: 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+//             description: 'Dark themed map',
+//             maxZoom: 19
+//         },
+//         OpenStreetMap: {
+//             name: 'OpenStreetMap',
+//             url: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+//             description: 'Detailed street map',
+//             maxZoom: 19
+//         },
+//         Satellite: {
+//             name: 'Satellite',
+//             url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+//             description: 'Satellite imagery',
+//             maxZoom: 18
+//         }
+//     };
+
+//     // Load annotations from state (simulating localStorage)
+//     const loadAnnotations = () => {
+//         // In a real app with localStorage:
+//         // const saved = localStorage.getItem(`annotations_${layer}`);
+//         // return saved ? JSON.parse(saved) : [];
+        
+//         // Using state instead since localStorage isn't available in artifacts
+//         return annotations.filter(a => a.layer === layer);
+//     };
+
+//     // Save annotations to state (simulating localStorage)
+//     const saveAnnotations = (newAnnotations) => {
+//         // In a real app with localStorage:
+//         // localStorage.setItem(`annotations_${layer}`, JSON.stringify(newAnnotations));
+        
+//         // Remove old annotations for this layer and add new ones
+//         const otherLayerAnnotations = annotations.filter(a => a.layer !== layer);
+//         setAnnotations([...otherLayerAnnotations, ...newAnnotations]);
+//     };
+
+//     const initializeViewer = () => {
+//         setDebugInfo('Creating viewer...');
+
+//         if (!viewerRef.current) {
+//             console.error('Container ref not ready');
+//             setError('Container not ready');
+//             setIsLoading(false);
+//             return;
+//         }
+
+//         try {
+//             const maxLevel = layers[layer].maxZoom;
+//             const size = Math.pow(2, maxLevel);
+
+//             const tileSource = {
+//                 width: size,
+//                 height: size,
+//                 tileSize: 256,
+//                 minLevel: 0,
+//                 maxLevel: maxLevel,
+//                 getTileUrl: function(level, x, y) {
+//                     const maxTiles = Math.pow(2, level);
+//                     x = ((x % maxTiles) + maxTiles) % maxTiles;
+                    
+//                     if (y < 0 || y >= maxTiles) {
+//                         return null;
+//                     }
+                    
+//                     return layers[layer].url
+//                         .replace('{z}', level)
+//                         .replace('{x}', x)
+//                         .replace('{y}', y);
+//                 }
+//             };
+
+//             const viewer = OpenSeadragon({
+//                 element: viewerRef.current,
+//                 prefixUrl: 'https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/images/',
+//                 tileSources: tileSource,
+//                 showNavigationControl: false,
+//                 showFullPageControl: false,
+//                 defaultZoomLevel: 0,
+//                 minZoomLevel: 0,
+//                 maxZoomLevel: maxLevel - 8,
+//                 visibilityRatio: 1,
+//                 constrainDuringPan: false,
+//                 wrapHorizontal: true,
+//                 wrapVertical: false,
+//                 animationTime: 0.5,
+//                 springStiffness: 7,
+//                 immediateRender: false,
+//                 blendTime: 0.2,
+//                 alwaysBlend: false,
+//                 placeholderFillStyle: layer === 'Dark' ? '#1a1a1a' : '#d0d0d0',
+//                 gestureSettingsMouse: {
+//                     scrollToZoom: true,
+//                     clickToZoom: false,
+//                     dblClickToZoom: false,
+//                     pinchToZoom: true,
+//                     flickEnabled: true,
+//                     flickMinSpeed: 40,
+//                     flickMomentum: 0.4
+//                 },
+//                 gestureSettingsTouch: {
+//                     scrollToZoom: false,
+//                     clickToZoom: false,
+//                     dblClickToZoom: true,
+//                     pinchToZoom: true,
+//                     flickEnabled: true,
+//                     flickMinSpeed: 40,
+//                     flickMomentum: 0.4
+//                 }
+//             });
+
+//             viewer.addHandler('open', () => {
+//                 console.log('Viewer opened successfully!');
+//                 setDebugInfo('Viewer opened - Loading tiles');
+//                 setIsLoading(false);
+                
+//                 setTimeout(() => {
+//                     viewer.viewport.fitBounds(new OpenSeadragon.Rect(0, 0, 1, 1));
+//                     updateCoordinates(viewer);
+//                     renderAnnotations(viewer);
+//                 }, 100);
+//             });
+
+//             viewer.addHandler('open-failed', (event) => {
+//                 console.error('Viewer open failed:', event);
+//                 setError('Failed to open map viewer');
+//                 setIsLoading(false);
+//             });
+
+//             viewer.addHandler('viewport-change', () => {
+//                 updateCoordinates(viewer);
+//             });
+
+//             // Handle right-click for annotations
+//             viewer.addHandler('canvas-contextmenu', (event) => {
+//                 event.preventDefaultAction = true;
+//                 handleRightClick(event, viewer);
+//             });
+
+//             osdInstance.current = viewer;
+//             setDebugInfo('Viewer initialized');
+
+//         } catch (e) {
+//             console.error('Error initializing viewer:', e);
+//             setError(`Initialization error: ${e.message}`);
+//             setIsLoading(false);
+//         }
+//     };
+
+//     const handleRightClick = (event, viewer) => {
+//         const viewportPoint = viewer.viewport.pointFromPixel(event.position);
+//         const imagePoint = viewer.viewport.viewportToImageCoordinates(viewportPoint);
+        
+//         setCurrentAnnotation({
+//             x: imagePoint.x,
+//             y: imagePoint.y,
+//             layer: layer,
+//             id: Date.now()
+//         });
+//         setAnnotationText('');
+//         setShowAnnotationForm(true);
+//     };
+
+//     const saveAnnotation = () => {
+//         if (!annotationText.trim() || !currentAnnotation) return;
+
+//         const newAnnotation = {
+//             ...currentAnnotation,
+//             text: annotationText,
+//             timestamp: new Date().toISOString()
+//         };
+
+//         const currentAnnotations = loadAnnotations();
+//         const updatedAnnotations = [...currentAnnotations, newAnnotation];
+//         saveAnnotations(updatedAnnotations);
+
+//         setShowAnnotationForm(false);
+//         setCurrentAnnotation(null);
+//         setAnnotationText('');
+
+//         if (osdInstance.current) {
+//             renderAnnotations(osdInstance.current);
+//         }
+//     };
+
+//     const deleteAnnotation = (annotationId) => {
+//         const currentAnnotations = loadAnnotations();
+//         const updatedAnnotations = currentAnnotations.filter(a => a.id !== annotationId);
+//         saveAnnotations(updatedAnnotations);
+
+//         if (osdInstance.current) {
+//             renderAnnotations(osdInstance.current);
+//         }
+//     };
+
+//     const renderAnnotations = (viewer) => {
+//         if (!viewer || !showAnnotations) return;
+
+//         // Remove existing overlays
+//         viewer.clearOverlays();
+
+//         const currentAnnotations = loadAnnotations();
+
+//         currentAnnotations.forEach(annotation => {
+//             const element = document.createElement('div');
+//             element.className = 'annotation-marker';
+//             element.innerHTML = `
+//                 <div class="relative group">
+//                     <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:bg-red-600 transition">
+//                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+//                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+//                         </svg>
+//                     </div>
+//                     <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+//                         <div class="bg-black/90 text-white text-sm rounded px-3 py-2 whitespace-nowrap shadow-lg max-w-xs">
+//                             ${annotation.text}
+//                         </div>
+//                     </div>
+//                 </div>
+//             `;
+
+//             // Add delete button
+//             element.querySelector('.annotation-marker').addEventListener('click', (e) => {
+//                 e.stopPropagation();
+//                 if (confirm('Delete this annotation?')) {
+//                     deleteAnnotation(annotation.id);
+//                 }
+//             });
+
+//             const location = new OpenSeadragon.Point(annotation.x, annotation.y);
+//             viewer.addOverlay({
+//                 element: element,
+//                 location: location,
+//                 placement: OpenSeadragon.Placement.CENTER
+//             });
+//         });
+//     };
+
+//     const updateCoordinates = (viewer) => {
+//         if (!viewer || !viewer.viewport || !viewer.world.getItemCount()) return;
+
+//         try {
+//             const viewport = viewer.viewport;
+//             const center = viewport.getCenter();
+//             const zoom = viewport.getZoom();
+//             const imageSize = viewer.world.getItemAt(0).getContentSize();
+
+//             const x = center.x * imageSize.x;
+//             const y = center.y * imageSize.y;
+
+//             const maxLevel = layers[layer].maxZoom;
+//             const scale = Math.pow(2, maxLevel);
+
+//             const lon = (x / scale) * 360 - 180;
+//             const n = Math.PI - 2 * Math.PI * y / scale;
+//             const lat = (180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n))));
+
+//             const containerWidth = viewer.container.clientWidth;
+//             const worldWidth = imageSize.x * zoom;
+//             const tilesAcross = worldWidth / 256;
+//             const zoomLevel = Math.log2(tilesAcross * 256);
+
+//             setCoordinates({
+//                 lat: isFinite(lat) ? lat : 0,
+//                 lon: isFinite(lon) ? lon : 0,
+//                 zoom: isFinite(zoomLevel) ? zoomLevel : 2
+//             });
+//         } catch (e) {
+//             console.error('Error updating coordinates:', e);
+//         }
+//     };
+
+//     useEffect(() => {
+//         const timer = setTimeout(() => {
+//             initializeViewer();
+//         }, 100);
+
+//         return () => {
+//             clearTimeout(timer);
+//             if (osdInstance.current) {
+//                 try {
+//                     osdInstance.current.destroy();
+//                 } catch (e) {
+//                     console.error('Error destroying viewer:', e);
+//                 }
+//             }
+//         };
+//     }, []);
+
+//     useEffect(() => {
+//         if (osdInstance.current && !isLoading) {
+//             osdInstance.current.destroy();
+//             setIsLoading(true);
+//             setDebugInfo('Switching layers...');
+//             setTimeout(() => initializeViewer(), 200);
+//         }
+//     }, [layer]);
+
+//     useEffect(() => {
+//         if (osdInstance.current) {
+//             renderAnnotations(osdInstance.current);
+//         }
+//     }, [showAnnotations]);
+
+//     const handleZoomIn = () => {
+//         if (osdInstance.current) {
+//             osdInstance.current.viewport.zoomBy(2);
+//         }
+//     };
+
+//     const handleZoomOut = () => {
+//         if (osdInstance.current) {
+//             osdInstance.current.viewport.zoomBy(0.5);
+//         }
+//     };
+
+//     const handleReset = () => {
+//         if (osdInstance.current) {
+//             osdInstance.current.viewport.goHome();
+//         }
+//     };
+
+//     const exportAnnotations = () => {
+//         const dataStr = JSON.stringify(annotations, null, 2);
+//         const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+//         const exportFileDefaultName = `annotations_${new Date().toISOString()}.json`;
+        
+//         const linkElement = document.createElement('a');
+//         linkElement.setAttribute('href', dataUri);
+//         linkElement.setAttribute('download', exportFileDefaultName);
+//         linkElement.click();
+//     };
+
+//     if (error) {
+//         return (
+//             <div className="flex items-center justify-center h-screen bg-gray-900">
+//                 <div className="text-center text-white max-w-lg">
+//                     <p className="text-xl mb-4">Error: {error}</p>
+//                     <button
+//                         onClick={() => window.location.reload()}
+//                         className="px-6 py-2 bg-blue-600 rounded hover:bg-blue-700"
+//                     >
+//                         Reload Page
+//                     </button>
+//                 </div>
+//             </div>
+//         );
+//     }
+
+//     return (
+//         <div className="relative w-full h-screen overflow-hidden select-none bg-gray-900">
+//             {isLoading && (
+//                 <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-50">
+//                     <div className="text-center text-white">
+//                         <Loader2 className="w-16 h-16 animate-spin mx-auto mb-4 text-blue-400" />
+//                         <p className="text-xl">Loading Earth Map...</p>
+//                         <p className="text-sm text-gray-400 mt-2">{debugInfo}</p>
+//                     </div>
+//                 </div>
+//             )}
+
+//             <div
+//                 ref={viewerRef}
+//                 className="absolute inset-0"
+//                 style={{
+//                     backgroundColor: layer === 'Dark' ? '#0a0a0a' : '#a8dadc',
+//                     width: '100%',
+//                     height: '100%'
+//                 }}
+//             />
+
+//             {/* Annotation Form Modal */}
+//             {showAnnotationForm && (
+//                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-50">
+//                     <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+//                         <div className="flex items-center justify-between mb-4">
+//                             <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+//                                 <MapPin className="w-5 h-5" />
+//                                 Add Annotation
+//                             </h3>
+//                             <button
+//                                 onClick={() => setShowAnnotationForm(false)}
+//                                 className="text-gray-500 hover:text-gray-700"
+//                             >
+//                                 <X className="w-5 h-5" />
+//                             </button>
+//                         </div>
+//                         <textarea
+//                             value={annotationText}
+//                             onChange={(e) => setAnnotationText(e.target.value)}
+//                             placeholder="Enter annotation text..."
+//                             className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-gray-800"
+//                             autoFocus
+//                         />
+//                         <div className="flex gap-2 mt-4">
+//                             <button
+//                                 onClick={saveAnnotation}
+//                                 disabled={!annotationText.trim()}
+//                                 className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+//                             >
+//                                 <Save className="w-4 h-4" />
+//                                 Save
+//                             </button>
+//                             <button
+//                                 onClick={() => setShowAnnotationForm(false)}
+//                                 className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+//                             >
+//                                 Cancel
+//                             </button>
+//                         </div>
+//                     </div>
+//                 </div>
+//             )}
+
+//             {/* Header */}
+//             <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 to-transparent z-10 p-4 pointer-events-none">
+//                 <div className="flex items-center justify-between">
+//                     <div className="flex items-center gap-3">
+//                         <Globe className="w-8 h-8 text-blue-400" />
+//                         <div>
+//                             <h1 className="text-2xl font-bold text-white">Interactive Earth Map</h1>
+//                             <p className="text-sm text-gray-300">Right-click to annotate • {loadAnnotations().length} annotations</p>
+//                         </div>
+//                     </div>
+//                     <button
+//                         onClick={exportAnnotations}
+//                         className="pointer-events-auto px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm flex items-center gap-2"
+//                     >
+//                         <Save className="w-4 h-4" />
+//                         Export
+//                     </button>
+//                 </div>
+//             </div>
+
+//             {/* Controls */}
+//             {!isLoading && (
+//                 <div className="absolute top-24 right-4 z-10 flex flex-col gap-2 pointer-events-auto">
+//                     <button
+//                         onClick={handleZoomIn}
+//                         className="p-3 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white transition active:scale-95"
+//                         title="Zoom In"
+//                     >
+//                         <ZoomIn className="w-5 h-5 text-gray-800" />
+//                     </button>
+//                     <button
+//                         onClick={handleZoomOut}
+//                         className="p-3 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white transition active:scale-95"
+//                         title="Zoom Out"
+//                     >
+//                         <ZoomOut className="w-5 h-5 text-gray-800" />
+//                     </button>
+//                     <button
+//                         onClick={handleReset}
+//                         className="p-3 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white transition active:scale-95"
+//                         title="Reset to Home"
+//                     >
+//                         <Home className="w-5 h-5 text-gray-800" />
+//                     </button>
+//                     <button
+//                         onClick={() => setShowAnnotations(!showAnnotations)}
+//                         className={`p-3 rounded-lg shadow-lg transition active:scale-95 ${
+//                             showAnnotations 
+//                                 ? 'bg-blue-600 text-white hover:bg-blue-700' 
+//                                 : 'bg-white/95 backdrop-blur-sm hover:bg-white'
+//                         }`}
+//                         title="Toggle Annotations"
+//                     >
+//                         <MapPin className={`w-5 h-5 ${showAnnotations ? 'text-white' : 'text-gray-800'}`} />
+//                     </button>
+//                     <button
+//                         onClick={() => setShowInfo(!showInfo)}
+//                         className="p-3 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white transition active:scale-95"
+//                         title="Toggle Info"
+//                     >
+//                         <Info className="w-5 h-5 text-gray-800" />
+//                     </button>
+//                 </div>
+//             )}
+
+//             {/* Layer Selector */}
+//             {!isLoading && (
+//                 <div className="absolute top-24 left-4 z-10 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 pointer-events-auto">
+//                     <div className="flex items-center gap-2 mb-2">
+//                         <Layers className="w-5 h-5 text-gray-800" />
+//                         <span className="font-semibold text-gray-800">Layers</span>
+//                     </div>
+//                     <div className="flex flex-col gap-1">
+//                         {Object.entries(layers).map(([key, value]) => (
+//                             <button
+//                                 key={key}
+//                                 onClick={() => setLayer(key)}
+//                                 disabled={layer === key}
+//                                 className={`px-3 py-2 rounded text-sm transition text-left active:scale-95 ${
+//                                     layer === key
+//                                         ? 'bg-blue-600 text-white cursor-default'
+//                                         : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+//                                 }`}
+//                             >
+//                                 <div className="font-medium">{value.name}</div>
+//                             </button>
+//                         ))}
+//                     </div>
+//                 </div>
+//             )}
+
+//             {/* Info Panel */}
+//             {showInfo && !isLoading && (
+//                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent z-10 p-4 pointer-events-none">
+//                     <div className="max-w-4xl mx-auto">
+//                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-white mb-2">
+//                             <div>
+//                                 <p className="text-xs text-gray-400">Latitude</p>
+//                                 <p className="font-mono text-lg">{coordinates.lat.toFixed(4)}°</p>
+//                             </div>
+//                             <div>
+//                                 <p className="text-xs text-gray-400">Longitude</p>
+//                                 <p className="font-mono text-lg">{coordinates.lon.toFixed(4)}°</p>
+//                             </div>
+//                             <div>
+//                                 <p className="text-xs text-gray-400">Zoom Level</p>
+//                                 <p className="font-mono text-lg">{coordinates.zoom.toFixed(1)}</p>
+//                             </div>
+//                             <div>
+//                                 <p className="text-xs text-gray-400">Annotations</p>
+//                                 <p className="text-lg">{loadAnnotations().length} on this layer</p>
+//                             </div>
+//                         </div>
+//                         <p className="text-xs text-gray-400 mt-2">
+//                             Drag to pan • Scroll to zoom • Right-click to add annotation
+//                         </p>
+//                     </div>
+//                 </div>
+//             )}
+//         </div>
+//     );
+// }                </button>
 //                 <button
 //                     onClick={handleReset}
 //                     className="p-3 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white transition active:scale-95"
@@ -2321,573 +2888,573 @@
 // }
 
 //V9
-import React, { useState, useEffect, useRef } from 'react';
-import OpenSeadragon from 'openseadragon';
-import { ZoomIn, ZoomOut, Maximize2, Layers, Info, Globe, Home, Loader2, MapPin, X, Save } from 'lucide-react';
+// import React, { useState, useEffect, useRef } from 'react';
+// import OpenSeadragon from 'openseadragon';
+// import { ZoomIn, ZoomOut, Maximize2, Layers, Info, Globe, Home, Loader2, MapPin, X, Save } from 'lucide-react';
 
-export default function NasaEarthViewer() {
-    const [showInfo, setShowInfo] = useState(true);
-    const [layer, setLayer] = useState('CartoDB');
-    const [coordinates, setCoordinates] = useState({ lat: 0, lon: 0, zoom: 2 });
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [debugInfo, setDebugInfo] = useState('Initializing...');
-    const [annotations, setAnnotations] = useState([]);
-    const [showAnnotationForm, setShowAnnotationForm] = useState(false);
-    const [currentAnnotation, setCurrentAnnotation] = useState(null);
-    const [annotationText, setAnnotationText] = useState('');
-    const [showAnnotations, setShowAnnotations] = useState(true);
+// export default function NasaEarthViewer() {
+//     const [showInfo, setShowInfo] = useState(true);
+//     const [layer, setLayer] = useState('CartoDB');
+//     const [coordinates, setCoordinates] = useState({ lat: 0, lon: 0, zoom: 2 });
+//     const [isLoading, setIsLoading] = useState(true);
+//     const [error, setError] = useState(null);
+//     const [debugInfo, setDebugInfo] = useState('Initializing...');
+//     const [annotations, setAnnotations] = useState([]);
+//     const [showAnnotationForm, setShowAnnotationForm] = useState(false);
+//     const [currentAnnotation, setCurrentAnnotation] = useState(null);
+//     const [annotationText, setAnnotationText] = useState('');
+//     const [showAnnotations, setShowAnnotations] = useState(true);
     
-    const viewerRef = useRef(null);
-    const osdInstance = useRef(null);
-    const overlayContainerRef = useRef(null);
+//     const viewerRef = useRef(null);
+//     const osdInstance = useRef(null);
+//     const overlayContainerRef = useRef(null);
 
-    const layers = {
-        CartoDB: {
-            name: 'Light Map',
-            url: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-            description: 'Clean, fast-loading map',
-            maxZoom: 19
-        },
-        Dark: {
-            name: 'Dark Mode',
-            url: 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-            description: 'Dark themed map',
-            maxZoom: 19
-        },
-        OpenStreetMap: {
-            name: 'OpenStreetMap',
-            url: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            description: 'Detailed street map',
-            maxZoom: 19
-        },
-        Satellite: {
-            name: 'Satellite',
-            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-            description: 'Satellite imagery',
-            maxZoom: 18
-        }
-    };
+//     const layers = {
+//         CartoDB: {
+//             name: 'Light Map',
+//             url: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+//             description: 'Clean, fast-loading map',
+//             maxZoom: 19
+//         },
+//         Dark: {
+//             name: 'Dark Mode',
+//             url: 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+//             description: 'Dark themed map',
+//             maxZoom: 19
+//         },
+//         OpenStreetMap: {
+//             name: 'OpenStreetMap',
+//             url: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+//             description: 'Detailed street map',
+//             maxZoom: 19
+//         },
+//         Satellite: {
+//             name: 'Satellite',
+//             url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+//             description: 'Satellite imagery',
+//             maxZoom: 18
+//         }
+//     };
 
-    // Load annotations from state (simulating localStorage)
-    const loadAnnotations = () => {
-        // In a real app with localStorage:
-        // const saved = localStorage.getItem(`annotations_${layer}`);
-        // return saved ? JSON.parse(saved) : [];
+//     // Load annotations from state (simulating localStorage)
+//     const loadAnnotations = () => {
+//         // In a real app with localStorage:
+//         // const saved = localStorage.getItem(`annotations_${layer}`);
+//         // return saved ? JSON.parse(saved) : [];
         
-        // Using state instead since localStorage isn't available in artifacts
-        return annotations.filter(a => a.layer === layer);
-    };
+//         // Using state instead since localStorage isn't available in artifacts
+//         return annotations.filter(a => a.layer === layer);
+//     };
 
-    // Save annotations to state (simulating localStorage)
-    const saveAnnotations = (newAnnotations) => {
-        // In a real app with localStorage:
-        // localStorage.setItem(`annotations_${layer}`, JSON.stringify(newAnnotations));
+//     // Save annotations to state (simulating localStorage)
+//     const saveAnnotations = (newAnnotations) => {
+//         // In a real app with localStorage:
+//         // localStorage.setItem(`annotations_${layer}`, JSON.stringify(newAnnotations));
         
-        // Remove old annotations for this layer and add new ones
-        const otherLayerAnnotations = annotations.filter(a => a.layer !== layer);
-        setAnnotations([...otherLayerAnnotations, ...newAnnotations]);
-    };
+//         // Remove old annotations for this layer and add new ones
+//         const otherLayerAnnotations = annotations.filter(a => a.layer !== layer);
+//         setAnnotations([...otherLayerAnnotations, ...newAnnotations]);
+//     };
 
-    const initializeViewer = () => {
-        setDebugInfo('Creating viewer...');
+//     const initializeViewer = () => {
+//         setDebugInfo('Creating viewer...');
 
-        if (!viewerRef.current) {
-            console.error('Container ref not ready');
-            setError('Container not ready');
-            setIsLoading(false);
-            return;
-        }
+//         if (!viewerRef.current) {
+//             console.error('Container ref not ready');
+//             setError('Container not ready');
+//             setIsLoading(false);
+//             return;
+//         }
 
-        try {
-            const maxLevel = layers[layer].maxZoom;
-            const size = Math.pow(2, maxLevel);
+//         try {
+//             const maxLevel = layers[layer].maxZoom;
+//             const size = Math.pow(2, maxLevel);
 
-            const tileSource = {
-                width: size,
-                height: size,
-                tileSize: 256,
-                minLevel: 0,
-                maxLevel: maxLevel,
-                getTileUrl: function(level, x, y) {
-                    const maxTiles = Math.pow(2, level);
-                    x = ((x % maxTiles) + maxTiles) % maxTiles;
+//             const tileSource = {
+//                 width: size,
+//                 height: size,
+//                 tileSize: 256,
+//                 minLevel: 0,
+//                 maxLevel: maxLevel,
+//                 getTileUrl: function(level, x, y) {
+//                     const maxTiles = Math.pow(2, level);
+//                     x = ((x % maxTiles) + maxTiles) % maxTiles;
                     
-                    if (y < 0 || y >= maxTiles) {
-                        return null;
-                    }
+//                     if (y < 0 || y >= maxTiles) {
+//                         return null;
+//                     }
                     
-                    return layers[layer].url
-                        .replace('{z}', level)
-                        .replace('{x}', x)
-                        .replace('{y}', y);
-                }
-            };
+//                     return layers[layer].url
+//                         .replace('{z}', level)
+//                         .replace('{x}', x)
+//                         .replace('{y}', y);
+//                 }
+//             };
 
-            const viewer = OpenSeadragon({
-                element: viewerRef.current,
-                prefixUrl: 'https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/images/',
-                tileSources: tileSource,
-                showNavigationControl: false,
-                showFullPageControl: false,
-                defaultZoomLevel: 0,
-                minZoomLevel: 0,
-                maxZoomLevel: maxLevel - 8,
-                visibilityRatio: 1,
-                constrainDuringPan: false,
-                wrapHorizontal: true,
-                wrapVertical: false,
-                animationTime: 0.5,
-                springStiffness: 7,
-                immediateRender: false,
-                blendTime: 0.2,
-                alwaysBlend: false,
-                placeholderFillStyle: layer === 'Dark' ? '#1a1a1a' : '#d0d0d0',
-                gestureSettingsMouse: {
-                    scrollToZoom: true,
-                    clickToZoom: false,
-                    dblClickToZoom: false,
-                    pinchToZoom: true,
-                    flickEnabled: true,
-                    flickMinSpeed: 40,
-                    flickMomentum: 0.4
-                },
-                gestureSettingsTouch: {
-                    scrollToZoom: false,
-                    clickToZoom: false,
-                    dblClickToZoom: true,
-                    pinchToZoom: true,
-                    flickEnabled: true,
-                    flickMinSpeed: 40,
-                    flickMomentum: 0.4
-                }
-            });
+//             const viewer = OpenSeadragon({
+//                 element: viewerRef.current,
+//                 prefixUrl: 'https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/images/',
+//                 tileSources: tileSource,
+//                 showNavigationControl: false,
+//                 showFullPageControl: false,
+//                 defaultZoomLevel: 0,
+//                 minZoomLevel: 0,
+//                 maxZoomLevel: maxLevel - 8,
+//                 visibilityRatio: 1,
+//                 constrainDuringPan: false,
+//                 wrapHorizontal: true,
+//                 wrapVertical: false,
+//                 animationTime: 0.5,
+//                 springStiffness: 7,
+//                 immediateRender: false,
+//                 blendTime: 0.2,
+//                 alwaysBlend: false,
+//                 placeholderFillStyle: layer === 'Dark' ? '#1a1a1a' : '#d0d0d0',
+//                 gestureSettingsMouse: {
+//                     scrollToZoom: true,
+//                     clickToZoom: false,
+//                     dblClickToZoom: false,
+//                     pinchToZoom: true,
+//                     flickEnabled: true,
+//                     flickMinSpeed: 40,
+//                     flickMomentum: 0.4
+//                 },
+//                 gestureSettingsTouch: {
+//                     scrollToZoom: false,
+//                     clickToZoom: false,
+//                     dblClickToZoom: true,
+//                     pinchToZoom: true,
+//                     flickEnabled: true,
+//                     flickMinSpeed: 40,
+//                     flickMomentum: 0.4
+//                 }
+//             });
 
-            viewer.addHandler('open', () => {
-                console.log('Viewer opened successfully!');
-                setDebugInfo('Viewer opened - Loading tiles');
-                setIsLoading(false);
+//             viewer.addHandler('open', () => {
+//                 console.log('Viewer opened successfully!');
+//                 setDebugInfo('Viewer opened - Loading tiles');
+//                 setIsLoading(false);
                 
-                setTimeout(() => {
-                    viewer.viewport.fitBounds(new OpenSeadragon.Rect(0, 0, 1, 1));
-                    updateCoordinates(viewer);
-                    renderAnnotations(viewer);
-                }, 100);
-            });
+//                 setTimeout(() => {
+//                     viewer.viewport.fitBounds(new OpenSeadragon.Rect(0, 0, 1, 1));
+//                     updateCoordinates(viewer);
+//                     renderAnnotations(viewer);
+//                 }, 100);
+//             });
 
-            viewer.addHandler('open-failed', (event) => {
-                console.error('Viewer open failed:', event);
-                setError('Failed to open map viewer');
-                setIsLoading(false);
-            });
+//             viewer.addHandler('open-failed', (event) => {
+//                 console.error('Viewer open failed:', event);
+//                 setError('Failed to open map viewer');
+//                 setIsLoading(false);
+//             });
 
-            viewer.addHandler('viewport-change', () => {
-                updateCoordinates(viewer);
-            });
+//             viewer.addHandler('viewport-change', () => {
+//                 updateCoordinates(viewer);
+//             });
 
-            // Handle right-click for annotations
-            viewer.addHandler('canvas-contextmenu', (event) => {
-                event.preventDefaultAction = true;
-                handleRightClick(event, viewer);
-            });
+//             // Handle right-click for annotations
+//             viewer.addHandler('canvas-contextmenu', (event) => {
+//                 event.preventDefaultAction = true;
+//                 handleRightClick(event, viewer);
+//             });
 
-            osdInstance.current = viewer;
-            setDebugInfo('Viewer initialized');
+//             osdInstance.current = viewer;
+//             setDebugInfo('Viewer initialized');
 
-        } catch (e) {
-            console.error('Error initializing viewer:', e);
-            setError(`Initialization error: ${e.message}`);
-            setIsLoading(false);
-        }
-    };
+//         } catch (e) {
+//             console.error('Error initializing viewer:', e);
+//             setError(`Initialization error: ${e.message}`);
+//             setIsLoading(false);
+//         }
+//     };
 
-    const handleRightClick = (event, viewer) => {
-        const viewportPoint = viewer.viewport.pointFromPixel(event.position);
-        const imagePoint = viewer.viewport.viewportToImageCoordinates(viewportPoint);
+//     const handleRightClick = (event, viewer) => {
+//         const viewportPoint = viewer.viewport.pointFromPixel(event.position);
+//         const imagePoint = viewer.viewport.viewportToImageCoordinates(viewportPoint);
         
-        setCurrentAnnotation({
-            x: imagePoint.x,
-            y: imagePoint.y,
-            layer: layer,
-            id: Date.now()
-        });
-        setAnnotationText('');
-        setShowAnnotationForm(true);
-    };
+//         setCurrentAnnotation({
+//             x: imagePoint.x,
+//             y: imagePoint.y,
+//             layer: layer,
+//             id: Date.now()
+//         });
+//         setAnnotationText('');
+//         setShowAnnotationForm(true);
+//     };
 
-    const saveAnnotation = () => {
-        if (!annotationText.trim() || !currentAnnotation) return;
+//     const saveAnnotation = () => {
+//         if (!annotationText.trim() || !currentAnnotation) return;
 
-        const newAnnotation = {
-            ...currentAnnotation,
-            text: annotationText,
-            timestamp: new Date().toISOString()
-        };
+//         const newAnnotation = {
+//             ...currentAnnotation,
+//             text: annotationText,
+//             timestamp: new Date().toISOString()
+//         };
 
-        const currentAnnotations = loadAnnotations();
-        const updatedAnnotations = [...currentAnnotations, newAnnotation];
-        saveAnnotations(updatedAnnotations);
+//         const currentAnnotations = loadAnnotations();
+//         const updatedAnnotations = [...currentAnnotations, newAnnotation];
+//         saveAnnotations(updatedAnnotations);
 
-        setShowAnnotationForm(false);
-        setCurrentAnnotation(null);
-        setAnnotationText('');
+//         setShowAnnotationForm(false);
+//         setCurrentAnnotation(null);
+//         setAnnotationText('');
 
-        if (osdInstance.current) {
-            renderAnnotations(osdInstance.current);
-        }
-    };
+//         if (osdInstance.current) {
+//             renderAnnotations(osdInstance.current);
+//         }
+//     };
 
-    const deleteAnnotation = (annotationId) => {
-        const currentAnnotations = loadAnnotations();
-        const updatedAnnotations = currentAnnotations.filter(a => a.id !== annotationId);
-        saveAnnotations(updatedAnnotations);
+//     const deleteAnnotation = (annotationId) => {
+//         const currentAnnotations = loadAnnotations();
+//         const updatedAnnotations = currentAnnotations.filter(a => a.id !== annotationId);
+//         saveAnnotations(updatedAnnotations);
 
-        if (osdInstance.current) {
-            renderAnnotations(osdInstance.current);
-        }
-    };
+//         if (osdInstance.current) {
+//             renderAnnotations(osdInstance.current);
+//         }
+//     };
 
-    const renderAnnotations = (viewer) => {
-        if (!viewer || !showAnnotations) return;
+//     const renderAnnotations = (viewer) => {
+//         if (!viewer || !showAnnotations) return;
 
-        // Remove existing overlays
-        viewer.clearOverlays();
+//         // Remove existing overlays
+//         viewer.clearOverlays();
 
-        const currentAnnotations = loadAnnotations();
+//         const currentAnnotations = loadAnnotations();
 
-        currentAnnotations.forEach(annotation => {
-            const element = document.createElement('div');
-            element.className = 'annotation-marker';
-            element.innerHTML = `
-                <div class="relative group">
-                    <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:bg-red-600 transition">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                    </div>
-                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                        <div class="bg-black/90 text-white text-sm rounded px-3 py-2 whitespace-nowrap shadow-lg max-w-xs">
-                            ${annotation.text}
-                        </div>
-                    </div>
-                </div>
-            `;
+//         currentAnnotations.forEach(annotation => {
+//             const element = document.createElement('div');
+//             element.className = 'annotation-marker';
+//             element.innerHTML = `
+//                 <div class="relative group">
+//                     <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:bg-red-600 transition">
+//                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+//                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+//                         </svg>
+//                     </div>
+//                     <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+//                         <div class="bg-black/90 text-white text-sm rounded px-3 py-2 whitespace-nowrap shadow-lg max-w-xs">
+//                             ${annotation.text}
+//                         </div>
+//                     </div>
+//                 </div>
+//             `;
 
-            // Add delete button
-            element.querySelector('.annotation-marker').addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (confirm('Delete this annotation?')) {
-                    deleteAnnotation(annotation.id);
-                }
-            });
+//             // Add delete button
+//             element.querySelector('.annotation-marker').addEventListener('click', (e) => {
+//                 e.stopPropagation();
+//                 if (confirm('Delete this annotation?')) {
+//                     deleteAnnotation(annotation.id);
+//                 }
+//             });
 
-            const location = new OpenSeadragon.Point(annotation.x, annotation.y);
-            viewer.addOverlay({
-                element: element,
-                location: location,
-                placement: OpenSeadragon.Placement.CENTER
-            });
-        });
-    };
+//             const location = new OpenSeadragon.Point(annotation.x, annotation.y);
+//             viewer.addOverlay({
+//                 element: element,
+//                 location: location,
+//                 placement: OpenSeadragon.Placement.CENTER
+//             });
+//         });
+//     };
 
-    const updateCoordinates = (viewer) => {
-        if (!viewer || !viewer.viewport || !viewer.world.getItemCount()) return;
+//     const updateCoordinates = (viewer) => {
+//         if (!viewer || !viewer.viewport || !viewer.world.getItemCount()) return;
 
-        try {
-            const viewport = viewer.viewport;
-            const center = viewport.getCenter();
-            const zoom = viewport.getZoom();
-            const imageSize = viewer.world.getItemAt(0).getContentSize();
+//         try {
+//             const viewport = viewer.viewport;
+//             const center = viewport.getCenter();
+//             const zoom = viewport.getZoom();
+//             const imageSize = viewer.world.getItemAt(0).getContentSize();
 
-            const x = center.x * imageSize.x;
-            const y = center.y * imageSize.y;
+//             const x = center.x * imageSize.x;
+//             const y = center.y * imageSize.y;
 
-            const maxLevel = layers[layer].maxZoom;
-            const scale = Math.pow(2, maxLevel);
+//             const maxLevel = layers[layer].maxZoom;
+//             const scale = Math.pow(2, maxLevel);
 
-            const lon = (x / scale) * 360 - 180;
-            const n = Math.PI - 2 * Math.PI * y / scale;
-            const lat = (180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n))));
+//             const lon = (x / scale) * 360 - 180;
+//             const n = Math.PI - 2 * Math.PI * y / scale;
+//             const lat = (180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n))));
 
-            const containerWidth = viewer.container.clientWidth;
-            const worldWidth = imageSize.x * zoom;
-            const tilesAcross = worldWidth / 256;
-            const zoomLevel = Math.log2(tilesAcross * 256);
+//             const containerWidth = viewer.container.clientWidth;
+//             const worldWidth = imageSize.x * zoom;
+//             const tilesAcross = worldWidth / 256;
+//             const zoomLevel = Math.log2(tilesAcross * 256);
 
-            setCoordinates({
-                lat: isFinite(lat) ? lat : 0,
-                lon: isFinite(lon) ? lon : 0,
-                zoom: isFinite(zoomLevel) ? zoomLevel : 2
-            });
-        } catch (e) {
-            console.error('Error updating coordinates:', e);
-        }
-    };
+//             setCoordinates({
+//                 lat: isFinite(lat) ? lat : 0,
+//                 lon: isFinite(lon) ? lon : 0,
+//                 zoom: isFinite(zoomLevel) ? zoomLevel : 2
+//             });
+//         } catch (e) {
+//             console.error('Error updating coordinates:', e);
+//         }
+//     };
 
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            initializeViewer();
-        }, 100);
+//     useEffect(() => {
+//         const timer = setTimeout(() => {
+//             initializeViewer();
+//         }, 100);
 
-        return () => {
-            clearTimeout(timer);
-            if (osdInstance.current) {
-                try {
-                    osdInstance.current.destroy();
-                } catch (e) {
-                    console.error('Error destroying viewer:', e);
-                }
-            }
-        };
-    }, []);
+//         return () => {
+//             clearTimeout(timer);
+//             if (osdInstance.current) {
+//                 try {
+//                     osdInstance.current.destroy();
+//                 } catch (e) {
+//                     console.error('Error destroying viewer:', e);
+//                 }
+//             }
+//         };
+//     }, []);
 
-    useEffect(() => {
-        if (osdInstance.current && !isLoading) {
-            osdInstance.current.destroy();
-            setIsLoading(true);
-            setDebugInfo('Switching layers...');
-            setTimeout(() => initializeViewer(), 200);
-        }
-    }, [layer]);
+//     useEffect(() => {
+//         if (osdInstance.current && !isLoading) {
+//             osdInstance.current.destroy();
+//             setIsLoading(true);
+//             setDebugInfo('Switching layers...');
+//             setTimeout(() => initializeViewer(), 200);
+//         }
+//     }, [layer]);
 
-    useEffect(() => {
-        if (osdInstance.current) {
-            renderAnnotations(osdInstance.current);
-        }
-    }, [showAnnotations]);
+//     useEffect(() => {
+//         if (osdInstance.current) {
+//             renderAnnotations(osdInstance.current);
+//         }
+//     }, [showAnnotations]);
 
-    const handleZoomIn = () => {
-        if (osdInstance.current) {
-            osdInstance.current.viewport.zoomBy(2);
-        }
-    };
+//     const handleZoomIn = () => {
+//         if (osdInstance.current) {
+//             osdInstance.current.viewport.zoomBy(2);
+//         }
+//     };
 
-    const handleZoomOut = () => {
-        if (osdInstance.current) {
-            osdInstance.current.viewport.zoomBy(0.5);
-        }
-    };
+//     const handleZoomOut = () => {
+//         if (osdInstance.current) {
+//             osdInstance.current.viewport.zoomBy(0.5);
+//         }
+//     };
 
-    const handleReset = () => {
-        if (osdInstance.current) {
-            osdInstance.current.viewport.goHome();
-        }
-    };
+//     const handleReset = () => {
+//         if (osdInstance.current) {
+//             osdInstance.current.viewport.goHome();
+//         }
+//     };
 
-    const exportAnnotations = () => {
-        const dataStr = JSON.stringify(annotations, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-        const exportFileDefaultName = `annotations_${new Date().toISOString()}.json`;
+//     const exportAnnotations = () => {
+//         const dataStr = JSON.stringify(annotations, null, 2);
+//         const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+//         const exportFileDefaultName = `annotations_${new Date().toISOString()}.json`;
         
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportFileDefaultName);
-        linkElement.click();
-    };
+//         const linkElement = document.createElement('a');
+//         linkElement.setAttribute('href', dataUri);
+//         linkElement.setAttribute('download', exportFileDefaultName);
+//         linkElement.click();
+//     };
 
-    if (error) {
-        return (
-            <div className="flex items-center justify-center h-screen bg-gray-900">
-                <div className="text-center text-white max-w-lg">
-                    <p className="text-xl mb-4">Error: {error}</p>
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="px-6 py-2 bg-blue-600 rounded hover:bg-blue-700"
-                    >
-                        Reload Page
-                    </button>
-                </div>
-            </div>
-        );
-    }
+//     if (error) {
+//         return (
+//             <div className="flex items-center justify-center h-screen bg-gray-900">
+//                 <div className="text-center text-white max-w-lg">
+//                     <p className="text-xl mb-4">Error: {error}</p>
+//                     <button
+//                         onClick={() => window.location.reload()}
+//                         className="px-6 py-2 bg-blue-600 rounded hover:bg-blue-700"
+//                     >
+//                         Reload Page
+//                     </button>
+//                 </div>
+//             </div>
+//         );
+//     }
 
-    return (
-        <div className="relative w-full h-screen overflow-hidden select-none bg-gray-900">
-            {isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-50">
-                    <div className="text-center text-white">
-                        <Loader2 className="w-16 h-16 animate-spin mx-auto mb-4 text-blue-400" />
-                        <p className="text-xl">Loading Earth Map...</p>
-                        <p className="text-sm text-gray-400 mt-2">{debugInfo}</p>
-                    </div>
-                </div>
-            )}
+//     return (
+//         <div className="relative w-full h-screen overflow-hidden select-none bg-gray-900">
+//             {isLoading && (
+//                 <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-50">
+//                     <div className="text-center text-white">
+//                         <Loader2 className="w-16 h-16 animate-spin mx-auto mb-4 text-blue-400" />
+//                         <p className="text-xl">Loading Earth Map...</p>
+//                         <p className="text-sm text-gray-400 mt-2">{debugInfo}</p>
+//                     </div>
+//                 </div>
+//             )}
 
-            <div
-                ref={viewerRef}
-                className="absolute inset-0"
-                style={{
-                    backgroundColor: layer === 'Dark' ? '#0a0a0a' : '#a8dadc',
-                    width: '100%',
-                    height: '100%'
-                }}
-            />
+//             <div
+//                 ref={viewerRef}
+//                 className="absolute inset-0"
+//                 style={{
+//                     backgroundColor: layer === 'Dark' ? '#0a0a0a' : '#a8dadc',
+//                     width: '100%',
+//                     height: '100%'
+//                 }}
+//             />
 
-            {/* Annotation Form Modal */}
-            {showAnnotationForm && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-50">
-                    <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                                <MapPin className="w-5 h-5" />
-                                Add Annotation
-                            </h3>
-                            <button
-                                onClick={() => setShowAnnotationForm(false)}
-                                className="text-gray-500 hover:text-gray-700"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <textarea
-                            value={annotationText}
-                            onChange={(e) => setAnnotationText(e.target.value)}
-                            placeholder="Enter annotation text..."
-                            className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-gray-800"
-                            autoFocus
-                        />
-                        <div className="flex gap-2 mt-4">
-                            <button
-                                onClick={saveAnnotation}
-                                disabled={!annotationText.trim()}
-                                className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
-                            >
-                                <Save className="w-4 h-4" />
-                                Save
-                            </button>
-                            <button
-                                onClick={() => setShowAnnotationForm(false)}
-                                className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+//             {/* Annotation Form Modal */}
+//             {showAnnotationForm && (
+//                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-50">
+//                     <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+//                         <div className="flex items-center justify-between mb-4">
+//                             <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+//                                 <MapPin className="w-5 h-5" />
+//                                 Add Annotation
+//                             </h3>
+//                             <button
+//                                 onClick={() => setShowAnnotationForm(false)}
+//                                 className="text-gray-500 hover:text-gray-700"
+//                             >
+//                                 <X className="w-5 h-5" />
+//                             </button>
+//                         </div>
+//                         <textarea
+//                             value={annotationText}
+//                             onChange={(e) => setAnnotationText(e.target.value)}
+//                             placeholder="Enter annotation text..."
+//                             className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-gray-800"
+//                             autoFocus
+//                         />
+//                         <div className="flex gap-2 mt-4">
+//                             <button
+//                                 onClick={saveAnnotation}
+//                                 disabled={!annotationText.trim()}
+//                                 className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+//                             >
+//                                 <Save className="w-4 h-4" />
+//                                 Save
+//                             </button>
+//                             <button
+//                                 onClick={() => setShowAnnotationForm(false)}
+//                                 className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+//                             >
+//                                 Cancel
+//                             </button>
+//                         </div>
+//                     </div>
+//                 </div>
+//             )}
 
-            {/* Header */}
-            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 to-transparent z-10 p-4 pointer-events-none">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <Globe className="w-8 h-8 text-blue-400" />
-                        <div>
-                            <h1 className="text-2xl font-bold text-white">Interactive Earth Map</h1>
-                            <p className="text-sm text-gray-300">Right-click to annotate • {loadAnnotations().length} annotations</p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={exportAnnotations}
-                        className="pointer-events-auto px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm flex items-center gap-2"
-                    >
-                        <Save className="w-4 h-4" />
-                        Export
-                    </button>
-                </div>
-            </div>
+//             {/* Header */}
+//             <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 to-transparent z-10 p-4 pointer-events-none">
+//                 <div className="flex items-center justify-between">
+//                     <div className="flex items-center gap-3">
+//                         <Globe className="w-8 h-8 text-blue-400" />
+//                         <div>
+//                             <h1 className="text-2xl font-bold text-white">Interactive Earth Map</h1>
+//                             <p className="text-sm text-gray-300">Right-click to annotate • {loadAnnotations().length} annotations</p>
+//                         </div>
+//                     </div>
+//                     <button
+//                         onClick={exportAnnotations}
+//                         className="pointer-events-auto px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm flex items-center gap-2"
+//                     >
+//                         <Save className="w-4 h-4" />
+//                         Export
+//                     </button>
+//                 </div>
+//             </div>
 
-            {/* Controls */}
-            {!isLoading && (
-                <div className="absolute top-24 right-4 z-10 flex flex-col gap-2 pointer-events-auto">
-                    <button
-                        onClick={handleZoomIn}
-                        className="p-3 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white transition active:scale-95"
-                        title="Zoom In"
-                    >
-                        <ZoomIn className="w-5 h-5 text-gray-800" />
-                    </button>
-                    <button
-                        onClick={handleZoomOut}
-                        className="p-3 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white transition active:scale-95"
-                        title="Zoom Out"
-                    >
-                        <ZoomOut className="w-5 h-5 text-gray-800" />
-                    </button>
-                    <button
-                        onClick={handleReset}
-                        className="p-3 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white transition active:scale-95"
-                        title="Reset to Home"
-                    >
-                        <Home className="w-5 h-5 text-gray-800" />
-                    </button>
-                    <button
-                        onClick={() => setShowAnnotations(!showAnnotations)}
-                        className={`p-3 rounded-lg shadow-lg transition active:scale-95 ${
-                            showAnnotations 
-                                ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                                : 'bg-white/95 backdrop-blur-sm hover:bg-white'
-                        }`}
-                        title="Toggle Annotations"
-                    >
-                        <MapPin className={`w-5 h-5 ${showAnnotations ? 'text-white' : 'text-gray-800'}`} />
-                    </button>
-                    <button
-                        onClick={() => setShowInfo(!showInfo)}
-                        className="p-3 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white transition active:scale-95"
-                        title="Toggle Info"
-                    >
-                        <Info className="w-5 h-5 text-gray-800" />
-                    </button>
-                </div>
-            )}
+//             {/* Controls */}
+//             {!isLoading && (
+//                 <div className="absolute top-24 right-4 z-10 flex flex-col gap-2 pointer-events-auto">
+//                     <button
+//                         onClick={handleZoomIn}
+//                         className="p-3 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white transition active:scale-95"
+//                         title="Zoom In"
+//                     >
+//                         <ZoomIn className="w-5 h-5 text-gray-800" />
+//                     </button>
+//                     <button
+//                         onClick={handleZoomOut}
+//                         className="p-3 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white transition active:scale-95"
+//                         title="Zoom Out"
+//                     >
+//                         <ZoomOut className="w-5 h-5 text-gray-800" />
+//                     </button>
+//                     <button
+//                         onClick={handleReset}
+//                         className="p-3 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white transition active:scale-95"
+//                         title="Reset to Home"
+//                     >
+//                         <Home className="w-5 h-5 text-gray-800" />
+//                     </button>
+//                     <button
+//                         onClick={() => setShowAnnotations(!showAnnotations)}
+//                         className={`p-3 rounded-lg shadow-lg transition active:scale-95 ${
+//                             showAnnotations 
+//                                 ? 'bg-blue-600 text-white hover:bg-blue-700' 
+//                                 : 'bg-white/95 backdrop-blur-sm hover:bg-white'
+//                         }`}
+//                         title="Toggle Annotations"
+//                     >
+//                         <MapPin className={`w-5 h-5 ${showAnnotations ? 'text-white' : 'text-gray-800'}`} />
+//                     </button>
+//                     <button
+//                         onClick={() => setShowInfo(!showInfo)}
+//                         className="p-3 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white transition active:scale-95"
+//                         title="Toggle Info"
+//                     >
+//                         <Info className="w-5 h-5 text-gray-800" />
+//                     </button>
+//                 </div>
+//             )}
 
-            {/* Layer Selector */}
-            {!isLoading && (
-                <div className="absolute top-24 left-4 z-10 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 pointer-events-auto">
-                    <div className="flex items-center gap-2 mb-2">
-                        <Layers className="w-5 h-5 text-gray-800" />
-                        <span className="font-semibold text-gray-800">Layers</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        {Object.entries(layers).map(([key, value]) => (
-                            <button
-                                key={key}
-                                onClick={() => setLayer(key)}
-                                disabled={layer === key}
-                                className={`px-3 py-2 rounded text-sm transition text-left active:scale-95 ${
-                                    layer === key
-                                        ? 'bg-blue-600 text-white cursor-default'
-                                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                                }`}
-                            >
-                                <div className="font-medium">{value.name}</div>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
+//             {/* Layer Selector */}
+//             {!isLoading && (
+//                 <div className="absolute top-24 left-4 z-10 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 pointer-events-auto">
+//                     <div className="flex items-center gap-2 mb-2">
+//                         <Layers className="w-5 h-5 text-gray-800" />
+//                         <span className="font-semibold text-gray-800">Layers</span>
+//                     </div>
+//                     <div className="flex flex-col gap-1">
+//                         {Object.entries(layers).map(([key, value]) => (
+//                             <button
+//                                 key={key}
+//                                 onClick={() => setLayer(key)}
+//                                 disabled={layer === key}
+//                                 className={`px-3 py-2 rounded text-sm transition text-left active:scale-95 ${
+//                                     layer === key
+//                                         ? 'bg-blue-600 text-white cursor-default'
+//                                         : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+//                                 }`}
+//                             >
+//                                 <div className="font-medium">{value.name}</div>
+//                             </button>
+//                         ))}
+//                     </div>
+//                 </div>
+//             )}
 
-            {/* Info Panel */}
-            {showInfo && !isLoading && (
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent z-10 p-4 pointer-events-none">
-                    <div className="max-w-4xl mx-auto">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-white mb-2">
-                            <div>
-                                <p className="text-xs text-gray-400">Latitude</p>
-                                <p className="font-mono text-lg">{coordinates.lat.toFixed(4)}°</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-400">Longitude</p>
-                                <p className="font-mono text-lg">{coordinates.lon.toFixed(4)}°</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-400">Zoom Level</p>
-                                <p className="font-mono text-lg">{coordinates.zoom.toFixed(1)}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-400">Annotations</p>
-                                <p className="text-lg">{loadAnnotations().length} on this layer</p>
-                            </div>
-                        </div>
-                        <p className="text-xs text-gray-400 mt-2">
-                            Drag to pan • Scroll to zoom • Right-click to add annotation
-                        </p>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-}
+//             {/* Info Panel */}
+//             {showInfo && !isLoading && (
+//                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent z-10 p-4 pointer-events-none">
+//                     <div className="max-w-4xl mx-auto">
+//                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-white mb-2">
+//                             <div>
+//                                 <p className="text-xs text-gray-400">Latitude</p>
+//                                 <p className="font-mono text-lg">{coordinates.lat.toFixed(4)}°</p>
+//                             </div>
+//                             <div>
+//                                 <p className="text-xs text-gray-400">Longitude</p>
+//                                 <p className="font-mono text-lg">{coordinates.lon.toFixed(4)}°</p>
+//                             </div>
+//                             <div>
+//                                 <p className="text-xs text-gray-400">Zoom Level</p>
+//                                 <p className="font-mono text-lg">{coordinates.zoom.toFixed(1)}</p>
+//                             </div>
+//                             <div>
+//                                 <p className="text-xs text-gray-400">Annotations</p>
+//                                 <p className="text-lg">{loadAnnotations().length} on this layer</p>
+//                             </div>
+//                         </div>
+//                         <p className="text-xs text-gray-400 mt-2">
+//                             Drag to pan • Scroll to zoom • Right-click to add annotation
+//                         </p>
+//                     </div>
+//                 </div>
+//             )}
+//         </div>
+//     );
+// }
 
 

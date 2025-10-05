@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
-import { ZoomIn, ZoomOut, Home, Info, Plus, Pen } from 'lucide-react';
+import { ZoomIn, ZoomOut, Home, Info, Plus, Pen, Camera } from 'lucide-react';
 import Return from './Return';
 
 
-function ViewerControls({ osdInstance, isViewing, setIsViewing, description, setShowAnnotation }) {
+function ViewerControls({ osdInstance, isViewing, setIsViewing, description, setShowAnnotation, handleScreenShot }) {
     const handleZoomIn = () => osdInstance.current?.viewport.zoomBy(2);
     const handleZoomOut = () => osdInstance.current?.viewport.zoomBy(0.5);
     const handleReset = () => osdInstance.current?.viewport.goHome();
@@ -16,8 +16,11 @@ function ViewerControls({ osdInstance, isViewing, setIsViewing, description, set
                 <Plus className='w-6 h-6 text-neutral-600' />
             </div>
             <Return isViewing={isViewing} onclick={setIsViewing} />
-            <div className={`${isViewing ? 'opacity-100' : 'hidden opacity-0'} fixed top-24 right-4 z-20 flex flex-col gap-2 pointer-events-auto select-none transition-opacity duration-300`}>
+            <div className={`${isViewing ? 'opacity-100' : 'hidden opacity-0'} fixed top-5 right-4 z-20 flex flex-col gap-2 pointer-events-auto select-none transition-opacity duration-300`}>
                 {/* Controls */}
+                <button onClick={handleScreenShot} className="p-3 bg-white/15 border-2 border-white/20 rounded-lg shadow-lg cursor-pointer">
+                    <Camera className="w-5 h-5 text-white/80" />
+                </button>
                 <button onClick={handleZoomIn} className="p-3 bg-white/15 border-2 border-white/20 rounded-lg shadow-lg cursor-pointer">
                     <ZoomIn className="w-5 h-5 text-white/80" />
                 </button>
@@ -85,6 +88,7 @@ function ViewerControls({ osdInstance, isViewing, setIsViewing, description, set
                     {description}
                 </div >
             </div>
+            <small className={`${isViewing ? 'opacity-100' : 'opacity-0'} pointer-event-none fixed bottom-4 left-1/2 -translate-x-1/2 z-300 text-white/70 transition-opacity duration-500`}>Click and Drag to navigate</small>
 
 
         </>
