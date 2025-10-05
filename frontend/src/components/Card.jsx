@@ -13,7 +13,7 @@ export default function Card({ title, image, description, onclick }) {
             {/* Overlay with description (hidden until hover) */}
             <div className="absolute inset-0 bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
                 <h3 className="font-bold text-2xl mb-2">{title}</h3>
-                <p className="text-2sm opacity-70">{description}</p>
+                <p className="text-2sm opacity-70 line-clamp-3">{description}</p>
             </div>
         </div>
     );

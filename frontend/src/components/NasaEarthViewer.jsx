@@ -2123,122 +2123,584 @@
 //     );
 // }
 
+// //V8
+// import React, { useState, useEffect, useRef } from 'react';
+// import OpenSeadragon from 'openseadragon';
+// import { ZoomIn, ZoomOut, Home, Layers, Info, Globe, Loader2 } from 'lucide-react';
+
+// export default function NasaEarthViewer() {
+//     const viewerRef = useRef(null);
+//     const osdInstance = useRef(null);
+
+//     const [isLoading, setIsLoading] = useState(true);
+//     const [layer, setLayer] = useState('CartoDB');
+//     const [coordinates, setCoordinates] = useState({ lat: 0, lon: 0, zoom: 2 });
+//     const [showInfo, setShowInfo] = useState(true);
+
+//     const layers = {
+//         CartoDB: {
+//             name: 'Light Map',
+//             url: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+//             maxZoom: 19,
+//         },
+//         Dark: {
+//             name: 'Dark Map',
+//             url: 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+//             maxZoom: 19,
+//         },
+//         OpenStreetMap: {
+//             name: 'OpenStreetMap',
+//             url: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+//             maxZoom: 19,
+//         },
+//         Satellite: {
+//             name: 'Satellite',
+//             url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+//             maxZoom: 18,
+//         },
+//     };
+
+//     // Generate tileSource for a layer
+//     const getTileSource = (layerName) => ({
+//         width: 256,
+//         height: 256,
+//         tileSize: 256,
+//         minLevel: 0,
+//         maxLevel: layers[layerName].maxZoom,
+//         getTileUrl: (level, x, y) => {
+//             const maxTiles = Math.pow(2, level);
+//             x = ((x % maxTiles) + maxTiles) % maxTiles;
+//             if (y < 0 || y >= maxTiles) return null;
+//             return layers[layerName].url
+//                 .replace('{z}', level)
+//                 .replace('{x}', x)
+//                 .replace('{y}', y);
+//         },
+//     });
+
+//     const updateCoordinates = (viewer) => {
+//         if (!viewer || !viewer.viewport || !viewer.world.getItemCount()) return;
+
+//         const viewport = viewer.viewport;
+//         const center = viewport.getCenter();
+//         const zoom = viewport.getZoom();
+//         const imageSize = viewer.world.getItemAt(0).getContentSize();
+
+//         const x = center.x * imageSize.x;
+//         const y = center.y * imageSize.y;
+//         const maxLevel = layers[layer].maxZoom;
+//         const scale = Math.pow(2, maxLevel);
+//         const lon = (x / scale) * 360 - 180;
+//         const n = Math.PI - 2 * Math.PI * y / scale;
+//         const lat = (180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n))));
+
+//         setCoordinates({
+//             lat: isFinite(lat) ? lat : 0,
+//             lon: isFinite(lon) ? lon : 0,
+//             zoom: isFinite(zoom) ? zoom : 2,
+//         });
+//     };
+
+//     useEffect(() => {
+//         if (!viewerRef.current) return;
+
+//         const viewer = OpenSeadragon({
+//             element: viewerRef.current,
+//             prefixUrl: '/openseadragon/images/',
+//             tileSources: getTileSource(layer),
+//             showNavigationControl: false,
+//             wrapHorizontal: true,
+//             wrapVertical: false,
+//             animationTime: 0.5,
+//             constrainDuringPan: false,
+//             crossOriginPolicy: 'Anonymous', // CORS safe
+//             ajaxWithCredentials: false,
+//         });
+
+//         osdInstance.current = viewer;
+
+//         viewer.addHandler('open', () => {
+//             viewer.viewport.goHome();
+//             setIsLoading(false);
+//             updateCoordinates(viewer);
+//         });
+
+//         viewer.addHandler('viewport-change', () => updateCoordinates(viewer));
+
+//         return () => osdInstance.current?.destroy();
+//     }, []);
+
+//     // Layer switching
+//     useEffect(() => {
+//         if (!osdInstance.current) return;
+//         setIsLoading(true);
+//         osdInstance.current.open(getTileSource(layer));
+//     }, [layer]);
+
+//     const handleZoomIn = () => osdInstance.current?.viewport.zoomBy(2);
+//     const handleZoomOut = () => osdInstance.current?.viewport.zoomBy(0.5);
+//     const handleReset = () => osdInstance.current?.viewport.goHome();
+
+//     return (
+//         <div className="relative w-full h-screen overflow-hidden select-none bg-gray-900">
+//             {isLoading && (
+//                 <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-50">
+//                     <div className="text-center text-white">
+//                         <Loader2 className="w-16 h-16 animate-spin mx-auto mb-4 text-blue-400" />
+//                         <p className="text-xl">Loading Map...</p>
+//                     </div>
+//                 </div>
+//             )}
+
+//             <div ref={viewerRef} className="absolute inset-0 w-full h-full" />
+
+//             {/* Controls */}
+//             <div className="absolute top-24 right-4 z-10 flex flex-col gap-2 pointer-events-auto">
+//                 <button onClick={handleZoomIn} className="p-3 bg-white/95 rounded-lg shadow-lg">
+//                     <ZoomIn className="w-5 h-5 text-gray-800" />
+//                 </button>
+//                 <button onClick={handleZoomOut} className="p-3 bg-white/95 rounded-lg shadow-lg">
+//                     <ZoomOut className="w-5 h-5 text-gray-800" />
+//                 </button>
+//                 <button onClick={handleReset} className="p-3 bg-white/95 rounded-lg shadow-lg">
+//                     <Home className="w-5 h-5 text-gray-800" />
+//                 </button>
+//                 <button onClick={() => setShowInfo(!showInfo)} className="p-3 bg-white/95 rounded-lg shadow-lg">
+//                     <Info className="w-5 h-5 text-gray-800" />
+//                 </button>
+//             </div>
+
+//             {/* Layer Selector */}
+//             <div className="absolute top-24 left-4 z-10 bg-white/95 p-3 rounded-lg shadow-lg pointer-events-auto">
+//                 <div className="flex items-center gap-2 mb-2">
+//                     <Layers className="w-5 h-5 text-gray-800" />
+//                     <span className="font-semibold text-gray-800">Layers</span>
+//                 </div>
+//                 <div className="flex flex-col gap-1">
+//                     {Object.entries(layers).map(([key, value]) => (
+//                         <button
+//                             key={key}
+//                             onClick={() => setLayer(key)}
+//                             disabled={layer === key}
+//                             className={`px-3 py-2 rounded text-sm ${layer === key
+//                                     ? 'bg-blue-600 text-white cursor-default'
+//                                     : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+//                                 }`}
+//                         >
+//                             {value.name}
+//                         </button>
+//                     ))}
+//                 </div>
+//             </div>
+
+//             {/* Info Panel */}
+//             {showInfo && (
+//                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent z-10 p-4 pointer-events-none">
+//                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-white mb-2 max-w-4xl mx-auto">
+//                         <div>
+//                             <p className="text-xs text-gray-400">Latitude</p>
+//                             <p className="font-mono text-lg">{coordinates.lat.toFixed(4)}°</p>
+//                         </div>
+//                         <div>
+//                             <p className="text-xs text-gray-400">Longitude</p>
+//                             <p className="font-mono text-lg">{coordinates.lon.toFixed(4)}°</p>
+//                         </div>
+//                         <div>
+//                             <p className="text-xs text-gray-400">Zoom Level</p>
+//                             <p className="font-mono text-lg">{coordinates.zoom.toFixed(2)}</p>
+//                         </div>
+//                         <div>
+//                             <p className="text-xs text-gray-400">Map Style</p>
+//                             <p className="text-lg">{layers[layer].name}</p>
+//                         </div>
+//                     </div>
+//                 </div>
+//             )}
+//         </div>
+//     );
+// }
+
+//V9
 import React, { useState, useEffect, useRef } from 'react';
 import OpenSeadragon from 'openseadragon';
-import { ZoomIn, ZoomOut, Home, Layers, Info, Globe, Loader2 } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize2, Layers, Info, Globe, Home, Loader2, MapPin, X, Save } from 'lucide-react';
 
 export default function NasaEarthViewer() {
-    const viewerRef = useRef(null);
-    const osdInstance = useRef(null);
-
-    const [isLoading, setIsLoading] = useState(true);
+    const [showInfo, setShowInfo] = useState(true);
     const [layer, setLayer] = useState('CartoDB');
     const [coordinates, setCoordinates] = useState({ lat: 0, lon: 0, zoom: 2 });
-    const [showInfo, setShowInfo] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [debugInfo, setDebugInfo] = useState('Initializing...');
+    const [annotations, setAnnotations] = useState([]);
+    const [showAnnotationForm, setShowAnnotationForm] = useState(false);
+    const [currentAnnotation, setCurrentAnnotation] = useState(null);
+    const [annotationText, setAnnotationText] = useState('');
+    const [showAnnotations, setShowAnnotations] = useState(true);
+    
+    const viewerRef = useRef(null);
+    const osdInstance = useRef(null);
+    const overlayContainerRef = useRef(null);
 
     const layers = {
         CartoDB: {
             name: 'Light Map',
             url: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-            maxZoom: 19,
+            description: 'Clean, fast-loading map',
+            maxZoom: 19
         },
         Dark: {
-            name: 'Dark Map',
+            name: 'Dark Mode',
             url: 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-            maxZoom: 19,
+            description: 'Dark themed map',
+            maxZoom: 19
         },
         OpenStreetMap: {
             name: 'OpenStreetMap',
             url: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            maxZoom: 19,
+            description: 'Detailed street map',
+            maxZoom: 19
         },
         Satellite: {
             name: 'Satellite',
             url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-            maxZoom: 18,
-        },
+            description: 'Satellite imagery',
+            maxZoom: 18
+        }
     };
 
-    // Generate tileSource for a layer
-    const getTileSource = (layerName) => ({
-        width: 256,
-        height: 256,
-        tileSize: 256,
-        minLevel: 0,
-        maxLevel: layers[layerName].maxZoom,
-        getTileUrl: (level, x, y) => {
-            const maxTiles = Math.pow(2, level);
-            x = ((x % maxTiles) + maxTiles) % maxTiles;
-            if (y < 0 || y >= maxTiles) return null;
-            return layers[layerName].url
-                .replace('{z}', level)
-                .replace('{x}', x)
-                .replace('{y}', y);
-        },
-    });
+    // Load annotations from state (simulating localStorage)
+    const loadAnnotations = () => {
+        // In a real app with localStorage:
+        // const saved = localStorage.getItem(`annotations_${layer}`);
+        // return saved ? JSON.parse(saved) : [];
+        
+        // Using state instead since localStorage isn't available in artifacts
+        return annotations.filter(a => a.layer === layer);
+    };
+
+    // Save annotations to state (simulating localStorage)
+    const saveAnnotations = (newAnnotations) => {
+        // In a real app with localStorage:
+        // localStorage.setItem(`annotations_${layer}`, JSON.stringify(newAnnotations));
+        
+        // Remove old annotations for this layer and add new ones
+        const otherLayerAnnotations = annotations.filter(a => a.layer !== layer);
+        setAnnotations([...otherLayerAnnotations, ...newAnnotations]);
+    };
+
+    const initializeViewer = () => {
+        setDebugInfo('Creating viewer...');
+
+        if (!viewerRef.current) {
+            console.error('Container ref not ready');
+            setError('Container not ready');
+            setIsLoading(false);
+            return;
+        }
+
+        try {
+            const maxLevel = layers[layer].maxZoom;
+            const size = Math.pow(2, maxLevel);
+
+            const tileSource = {
+                width: size,
+                height: size,
+                tileSize: 256,
+                minLevel: 0,
+                maxLevel: maxLevel,
+                getTileUrl: function(level, x, y) {
+                    const maxTiles = Math.pow(2, level);
+                    x = ((x % maxTiles) + maxTiles) % maxTiles;
+                    
+                    if (y < 0 || y >= maxTiles) {
+                        return null;
+                    }
+                    
+                    return layers[layer].url
+                        .replace('{z}', level)
+                        .replace('{x}', x)
+                        .replace('{y}', y);
+                }
+            };
+
+            const viewer = OpenSeadragon({
+                element: viewerRef.current,
+                prefixUrl: 'https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/images/',
+                tileSources: tileSource,
+                showNavigationControl: false,
+                showFullPageControl: false,
+                defaultZoomLevel: 0,
+                minZoomLevel: 0,
+                maxZoomLevel: maxLevel - 8,
+                visibilityRatio: 1,
+                constrainDuringPan: false,
+                wrapHorizontal: true,
+                wrapVertical: false,
+                animationTime: 0.5,
+                springStiffness: 7,
+                immediateRender: false,
+                blendTime: 0.2,
+                alwaysBlend: false,
+                placeholderFillStyle: layer === 'Dark' ? '#1a1a1a' : '#d0d0d0',
+                gestureSettingsMouse: {
+                    scrollToZoom: true,
+                    clickToZoom: false,
+                    dblClickToZoom: false,
+                    pinchToZoom: true,
+                    flickEnabled: true,
+                    flickMinSpeed: 40,
+                    flickMomentum: 0.4
+                },
+                gestureSettingsTouch: {
+                    scrollToZoom: false,
+                    clickToZoom: false,
+                    dblClickToZoom: true,
+                    pinchToZoom: true,
+                    flickEnabled: true,
+                    flickMinSpeed: 40,
+                    flickMomentum: 0.4
+                }
+            });
+
+            viewer.addHandler('open', () => {
+                console.log('Viewer opened successfully!');
+                setDebugInfo('Viewer opened - Loading tiles');
+                setIsLoading(false);
+                
+                setTimeout(() => {
+                    viewer.viewport.fitBounds(new OpenSeadragon.Rect(0, 0, 1, 1));
+                    updateCoordinates(viewer);
+                    renderAnnotations(viewer);
+                }, 100);
+            });
+
+            viewer.addHandler('open-failed', (event) => {
+                console.error('Viewer open failed:', event);
+                setError('Failed to open map viewer');
+                setIsLoading(false);
+            });
+
+            viewer.addHandler('viewport-change', () => {
+                updateCoordinates(viewer);
+            });
+
+            // Handle right-click for annotations
+            viewer.addHandler('canvas-contextmenu', (event) => {
+                event.preventDefaultAction = true;
+                handleRightClick(event, viewer);
+            });
+
+            osdInstance.current = viewer;
+            setDebugInfo('Viewer initialized');
+
+        } catch (e) {
+            console.error('Error initializing viewer:', e);
+            setError(`Initialization error: ${e.message}`);
+            setIsLoading(false);
+        }
+    };
+
+    const handleRightClick = (event, viewer) => {
+        const viewportPoint = viewer.viewport.pointFromPixel(event.position);
+        const imagePoint = viewer.viewport.viewportToImageCoordinates(viewportPoint);
+        
+        setCurrentAnnotation({
+            x: imagePoint.x,
+            y: imagePoint.y,
+            layer: layer,
+            id: Date.now()
+        });
+        setAnnotationText('');
+        setShowAnnotationForm(true);
+    };
+
+    const saveAnnotation = () => {
+        if (!annotationText.trim() || !currentAnnotation) return;
+
+        const newAnnotation = {
+            ...currentAnnotation,
+            text: annotationText,
+            timestamp: new Date().toISOString()
+        };
+
+        const currentAnnotations = loadAnnotations();
+        const updatedAnnotations = [...currentAnnotations, newAnnotation];
+        saveAnnotations(updatedAnnotations);
+
+        setShowAnnotationForm(false);
+        setCurrentAnnotation(null);
+        setAnnotationText('');
+
+        if (osdInstance.current) {
+            renderAnnotations(osdInstance.current);
+        }
+    };
+
+    const deleteAnnotation = (annotationId) => {
+        const currentAnnotations = loadAnnotations();
+        const updatedAnnotations = currentAnnotations.filter(a => a.id !== annotationId);
+        saveAnnotations(updatedAnnotations);
+
+        if (osdInstance.current) {
+            renderAnnotations(osdInstance.current);
+        }
+    };
+
+    const renderAnnotations = (viewer) => {
+        if (!viewer || !showAnnotations) return;
+
+        // Remove existing overlays
+        viewer.clearOverlays();
+
+        const currentAnnotations = loadAnnotations();
+
+        currentAnnotations.forEach(annotation => {
+            const element = document.createElement('div');
+            element.className = 'annotation-marker';
+            element.innerHTML = `
+                <div class="relative group">
+                    <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:bg-red-600 transition">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        <div class="bg-black/90 text-white text-sm rounded px-3 py-2 whitespace-nowrap shadow-lg max-w-xs">
+                            ${annotation.text}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add delete button
+            element.querySelector('.annotation-marker').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (confirm('Delete this annotation?')) {
+                    deleteAnnotation(annotation.id);
+                }
+            });
+
+            const location = new OpenSeadragon.Point(annotation.x, annotation.y);
+            viewer.addOverlay({
+                element: element,
+                location: location,
+                placement: OpenSeadragon.Placement.CENTER
+            });
+        });
+    };
 
     const updateCoordinates = (viewer) => {
         if (!viewer || !viewer.viewport || !viewer.world.getItemCount()) return;
 
-        const viewport = viewer.viewport;
-        const center = viewport.getCenter();
-        const zoom = viewport.getZoom();
-        const imageSize = viewer.world.getItemAt(0).getContentSize();
+        try {
+            const viewport = viewer.viewport;
+            const center = viewport.getCenter();
+            const zoom = viewport.getZoom();
+            const imageSize = viewer.world.getItemAt(0).getContentSize();
 
-        const x = center.x * imageSize.x;
-        const y = center.y * imageSize.y;
-        const maxLevel = layers[layer].maxZoom;
-        const scale = Math.pow(2, maxLevel);
-        const lon = (x / scale) * 360 - 180;
-        const n = Math.PI - 2 * Math.PI * y / scale;
-        const lat = (180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n))));
+            const x = center.x * imageSize.x;
+            const y = center.y * imageSize.y;
 
-        setCoordinates({
-            lat: isFinite(lat) ? lat : 0,
-            lon: isFinite(lon) ? lon : 0,
-            zoom: isFinite(zoom) ? zoom : 2,
-        });
+            const maxLevel = layers[layer].maxZoom;
+            const scale = Math.pow(2, maxLevel);
+
+            const lon = (x / scale) * 360 - 180;
+            const n = Math.PI - 2 * Math.PI * y / scale;
+            const lat = (180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n))));
+
+            const containerWidth = viewer.container.clientWidth;
+            const worldWidth = imageSize.x * zoom;
+            const tilesAcross = worldWidth / 256;
+            const zoomLevel = Math.log2(tilesAcross * 256);
+
+            setCoordinates({
+                lat: isFinite(lat) ? lat : 0,
+                lon: isFinite(lon) ? lon : 0,
+                zoom: isFinite(zoomLevel) ? zoomLevel : 2
+            });
+        } catch (e) {
+            console.error('Error updating coordinates:', e);
+        }
     };
 
     useEffect(() => {
-        if (!viewerRef.current) return;
+        const timer = setTimeout(() => {
+            initializeViewer();
+        }, 100);
 
-        const viewer = OpenSeadragon({
-            element: viewerRef.current,
-            prefixUrl: '/openseadragon/images/',
-            tileSources: getTileSource(layer),
-            showNavigationControl: false,
-            wrapHorizontal: true,
-            wrapVertical: false,
-            animationTime: 0.5,
-            constrainDuringPan: false,
-            crossOriginPolicy: 'Anonymous', // CORS safe
-            ajaxWithCredentials: false,
-        });
-
-        osdInstance.current = viewer;
-
-        viewer.addHandler('open', () => {
-            viewer.viewport.goHome();
-            setIsLoading(false);
-            updateCoordinates(viewer);
-        });
-
-        viewer.addHandler('viewport-change', () => updateCoordinates(viewer));
-
-        return () => osdInstance.current?.destroy();
+        return () => {
+            clearTimeout(timer);
+            if (osdInstance.current) {
+                try {
+                    osdInstance.current.destroy();
+                } catch (e) {
+                    console.error('Error destroying viewer:', e);
+                }
+            }
+        };
     }, []);
 
-    // Layer switching
     useEffect(() => {
-        if (!osdInstance.current) return;
-        setIsLoading(true);
-        osdInstance.current.open(getTileSource(layer));
+        if (osdInstance.current && !isLoading) {
+            osdInstance.current.destroy();
+            setIsLoading(true);
+            setDebugInfo('Switching layers...');
+            setTimeout(() => initializeViewer(), 200);
+        }
     }, [layer]);
 
-    const handleZoomIn = () => osdInstance.current?.viewport.zoomBy(2);
-    const handleZoomOut = () => osdInstance.current?.viewport.zoomBy(0.5);
-    const handleReset = () => osdInstance.current?.viewport.goHome();
+    useEffect(() => {
+        if (osdInstance.current) {
+            renderAnnotations(osdInstance.current);
+        }
+    }, [showAnnotations]);
+
+    const handleZoomIn = () => {
+        if (osdInstance.current) {
+            osdInstance.current.viewport.zoomBy(2);
+        }
+    };
+
+    const handleZoomOut = () => {
+        if (osdInstance.current) {
+            osdInstance.current.viewport.zoomBy(0.5);
+        }
+    };
+
+    const handleReset = () => {
+        if (osdInstance.current) {
+            osdInstance.current.viewport.goHome();
+        }
+    };
+
+    const exportAnnotations = () => {
+        const dataStr = JSON.stringify(annotations, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        const exportFileDefaultName = `annotations_${new Date().toISOString()}.json`;
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+    };
+
+    if (error) {
+        return (
+            <div className="flex items-center justify-center h-screen bg-gray-900">
+                <div className="text-center text-white max-w-lg">
+                    <p className="text-xl mb-4">Error: {error}</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="px-6 py-2 bg-blue-600 rounded hover:bg-blue-700"
+                    >
+                        Reload Page
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="relative w-full h-screen overflow-hidden select-none bg-gray-900">
@@ -2246,76 +2708,186 @@ export default function NasaEarthViewer() {
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-50">
                     <div className="text-center text-white">
                         <Loader2 className="w-16 h-16 animate-spin mx-auto mb-4 text-blue-400" />
-                        <p className="text-xl">Loading Map...</p>
+                        <p className="text-xl">Loading Earth Map...</p>
+                        <p className="text-sm text-gray-400 mt-2">{debugInfo}</p>
                     </div>
                 </div>
             )}
 
-            <div ref={viewerRef} className="absolute inset-0 w-full h-full" />
+            <div
+                ref={viewerRef}
+                className="absolute inset-0"
+                style={{
+                    backgroundColor: layer === 'Dark' ? '#0a0a0a' : '#a8dadc',
+                    width: '100%',
+                    height: '100%'
+                }}
+            />
+
+            {/* Annotation Form Modal */}
+            {showAnnotationForm && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-50">
+                    <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                <MapPin className="w-5 h-5" />
+                                Add Annotation
+                            </h3>
+                            <button
+                                onClick={() => setShowAnnotationForm(false)}
+                                className="text-gray-500 hover:text-gray-700"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <textarea
+                            value={annotationText}
+                            onChange={(e) => setAnnotationText(e.target.value)}
+                            placeholder="Enter annotation text..."
+                            className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-gray-800"
+                            autoFocus
+                        />
+                        <div className="flex gap-2 mt-4">
+                            <button
+                                onClick={saveAnnotation}
+                                disabled={!annotationText.trim()}
+                                className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+                            >
+                                <Save className="w-4 h-4" />
+                                Save
+                            </button>
+                            <button
+                                onClick={() => setShowAnnotationForm(false)}
+                                className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Header */}
+            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 to-transparent z-10 p-4 pointer-events-none">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Globe className="w-8 h-8 text-blue-400" />
+                        <div>
+                            <h1 className="text-2xl font-bold text-white">Interactive Earth Map</h1>
+                            <p className="text-sm text-gray-300">Right-click to annotate • {loadAnnotations().length} annotations</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={exportAnnotations}
+                        className="pointer-events-auto px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm flex items-center gap-2"
+                    >
+                        <Save className="w-4 h-4" />
+                        Export
+                    </button>
+                </div>
+            </div>
 
             {/* Controls */}
-            <div className="absolute top-24 right-4 z-10 flex flex-col gap-2 pointer-events-auto">
-                <button onClick={handleZoomIn} className="p-3 bg-white/95 rounded-lg shadow-lg">
-                    <ZoomIn className="w-5 h-5 text-gray-800" />
-                </button>
-                <button onClick={handleZoomOut} className="p-3 bg-white/95 rounded-lg shadow-lg">
-                    <ZoomOut className="w-5 h-5 text-gray-800" />
-                </button>
-                <button onClick={handleReset} className="p-3 bg-white/95 rounded-lg shadow-lg">
-                    <Home className="w-5 h-5 text-gray-800" />
-                </button>
-                <button onClick={() => setShowInfo(!showInfo)} className="p-3 bg-white/95 rounded-lg shadow-lg">
-                    <Info className="w-5 h-5 text-gray-800" />
-                </button>
-            </div>
+            {!isLoading && (
+                <div className="absolute top-24 right-4 z-10 flex flex-col gap-2 pointer-events-auto">
+                    <button
+                        onClick={handleZoomIn}
+                        className="p-3 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white transition active:scale-95"
+                        title="Zoom In"
+                    >
+                        <ZoomIn className="w-5 h-5 text-gray-800" />
+                    </button>
+                    <button
+                        onClick={handleZoomOut}
+                        className="p-3 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white transition active:scale-95"
+                        title="Zoom Out"
+                    >
+                        <ZoomOut className="w-5 h-5 text-gray-800" />
+                    </button>
+                    <button
+                        onClick={handleReset}
+                        className="p-3 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white transition active:scale-95"
+                        title="Reset to Home"
+                    >
+                        <Home className="w-5 h-5 text-gray-800" />
+                    </button>
+                    <button
+                        onClick={() => setShowAnnotations(!showAnnotations)}
+                        className={`p-3 rounded-lg shadow-lg transition active:scale-95 ${
+                            showAnnotations 
+                                ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                                : 'bg-white/95 backdrop-blur-sm hover:bg-white'
+                        }`}
+                        title="Toggle Annotations"
+                    >
+                        <MapPin className={`w-5 h-5 ${showAnnotations ? 'text-white' : 'text-gray-800'}`} />
+                    </button>
+                    <button
+                        onClick={() => setShowInfo(!showInfo)}
+                        className="p-3 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg hover:bg-white transition active:scale-95"
+                        title="Toggle Info"
+                    >
+                        <Info className="w-5 h-5 text-gray-800" />
+                    </button>
+                </div>
+            )}
 
             {/* Layer Selector */}
-            <div className="absolute top-24 left-4 z-10 bg-white/95 p-3 rounded-lg shadow-lg pointer-events-auto">
-                <div className="flex items-center gap-2 mb-2">
-                    <Layers className="w-5 h-5 text-gray-800" />
-                    <span className="font-semibold text-gray-800">Layers</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                    {Object.entries(layers).map(([key, value]) => (
-                        <button
-                            key={key}
-                            onClick={() => setLayer(key)}
-                            disabled={layer === key}
-                            className={`px-3 py-2 rounded text-sm ${layer === key
-                                    ? 'bg-blue-600 text-white cursor-default'
-                                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+            {!isLoading && (
+                <div className="absolute top-24 left-4 z-10 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 pointer-events-auto">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Layers className="w-5 h-5 text-gray-800" />
+                        <span className="font-semibold text-gray-800">Layers</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        {Object.entries(layers).map(([key, value]) => (
+                            <button
+                                key={key}
+                                onClick={() => setLayer(key)}
+                                disabled={layer === key}
+                                className={`px-3 py-2 rounded text-sm transition text-left active:scale-95 ${
+                                    layer === key
+                                        ? 'bg-blue-600 text-white cursor-default'
+                                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                                 }`}
-                        >
-                            {value.name}
-                        </button>
-                    ))}
+                            >
+                                <div className="font-medium">{value.name}</div>
+                            </button>
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Info Panel */}
-            {showInfo && (
+            {showInfo && !isLoading && (
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent z-10 p-4 pointer-events-none">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-white mb-2 max-w-4xl mx-auto">
-                        <div>
-                            <p className="text-xs text-gray-400">Latitude</p>
-                            <p className="font-mono text-lg">{coordinates.lat.toFixed(4)}°</p>
+                    <div className="max-w-4xl mx-auto">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-white mb-2">
+                            <div>
+                                <p className="text-xs text-gray-400">Latitude</p>
+                                <p className="font-mono text-lg">{coordinates.lat.toFixed(4)}°</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-400">Longitude</p>
+                                <p className="font-mono text-lg">{coordinates.lon.toFixed(4)}°</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-400">Zoom Level</p>
+                                <p className="font-mono text-lg">{coordinates.zoom.toFixed(1)}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-400">Annotations</p>
+                                <p className="text-lg">{loadAnnotations().length} on this layer</p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-xs text-gray-400">Longitude</p>
-                            <p className="font-mono text-lg">{coordinates.lon.toFixed(4)}°</p>
-                        </div>
-                        <div>
-                            <p className="text-xs text-gray-400">Zoom Level</p>
-                            <p className="font-mono text-lg">{coordinates.zoom.toFixed(2)}</p>
-                        </div>
-                        <div>
-                            <p className="text-xs text-gray-400">Map Style</p>
-                            <p className="text-lg">{layers[layer].name}</p>
-                        </div>
+                        <p className="text-xs text-gray-400 mt-2">
+                            Drag to pan • Scroll to zoom • Right-click to add annotation
+                        </p>
                     </div>
                 </div>
             )}
         </div>
     );
 }
+
 

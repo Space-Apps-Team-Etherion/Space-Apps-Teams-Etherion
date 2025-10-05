@@ -1,5 +1,5 @@
-import React from 'react'
-import { ZoomIn, ZoomOut, Home, Info, CrossIcon} from 'lucide-react';
+import React, { useState } from 'react'
+import { ZoomIn, ZoomOut, Home, Info, Plus } from 'lucide-react';
 import Return from './Return';
 
 
@@ -7,11 +7,13 @@ function ViewerControls({ osdInstance, isViewing, setIsViewing }) {
     const handleZoomIn = () => osdInstance.current?.viewport.zoomBy(2);
     const handleZoomOut = () => osdInstance.current?.viewport.zoomBy(0.5);
     const handleReset = () => osdInstance.current?.viewport.goHome();
+    const [showInfo, setShowInfo] = useState(true);
+
 
     return (
         <>
             <div className={`${isViewing ? 'opacity-100' : 'hidden opacity-0'} fixed top-1/2 left-1/2 -mx-1/2 -my-1/2 z-20 select-none transition-opacity duration-300`}>
-                <CrossIcon className='w-6 h-6 text-neutral-600' />
+                <Plus className='w-8 h-8 text-neutral-600' />
             </div>
             <Return isViewing={isViewing} onclick={setIsViewing} />
             <div className={`${isViewing ? 'opacity-100' : 'hidden opacity-0'} fixed top-24 right-4 z-20 flex flex-col gap-2 pointer-events-auto select-none transition-opacity duration-300`}>
@@ -76,6 +78,10 @@ function ViewerControls({ osdInstance, isViewing, setIsViewing }) {
                 </div>
                 )}*/}
             </div>
+            <div>
+
+            </div>
+
         </>
     )
 }
